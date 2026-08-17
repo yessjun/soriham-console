@@ -66,7 +66,7 @@ function HitRow({ hit, query }: { hit: SearchHit; query: string }) {
   return (
     <Link
       to={to}
-      className="flex min-h-14 flex-col justify-center gap-0.5 border-b border-border px-4 py-2 transition-colors duration-120 last:border-b-0 hover:bg-bg"
+      className="flex min-h-14 flex-col justify-center gap-1 border-b border-border px-4 py-2 transition-colors duration-120 last:border-b-0 hover:bg-bg"
     >
       <span className="flex items-center gap-2 text-sm text-text-secondary">
         <span className="truncate font-medium text-text">

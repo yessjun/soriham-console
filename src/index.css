@@ -148,6 +148,7 @@
   --text-2xl--line-height: 34px;
 
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --default-transition-timing-function: var(--ease-standard);
 }
 
 html,
