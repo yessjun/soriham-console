@@ -1,0 +1,218 @@
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
+import { Pause, Play, RotateCcw, RotateCw } from 'lucide-react'
+import { api } from './api'
+import { formatDuration } from './format'
+
+export interface PlayerTrack {
+  recordingId: string
+  title: string
+  subtitle?: string
+}
+
+interface PlayerState {
+  track: PlayerTrack | null
+  playing: boolean
+  currentTime: number
+  duration: number
+  rate: number
+  /** 트랙을 (필요 시 교체하고) 지정 위치부터 재생 */
+  play: (track: PlayerTrack, atSec?: number) => void
+  seek: (sec: number) => void
+  toggle: () => void
+  setRate: (rate: number) => void
+}
+
+const PlayerContext = createContext<PlayerState | null>(null)
+
+export function usePlayer(): PlayerState {
+  const ctx = useContext(PlayerContext)
+  if (!ctx) throw new Error('PlayerProvider 밖에서 usePlayer를 호출함')
+  return ctx
+}
+
+const RATES = [1, 1.25, 1.5, 2]
+
+export function PlayerProvider({ children }: { children: ReactNode }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [track, setTrack] = useState<PlayerTrack | null>(null)
+  const [playing, setPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [rate, setRateState] = useState(1)
+
+  const audio = useCallback(() => {
+    if (!audioRef.current) {
+      const el = new Audio()
+      el.preload = 'metadata'
+      el.addEventListener('timeupdate', () => setCurrentTime(el.currentTime))
+      el.addEventListener('durationchange', () => setDuration(el.duration || 0))
+      el.addEventListener('play', () => setPlaying(true))
+      el.addEventListener('pause', () => setPlaying(false))
+      el.addEventListener('ended', () => setPlaying(false))
+      audioRef.current = el
+    }
+    return audioRef.current
+  }, [])
+
+  const play = useCallback(
+    (next: PlayerTrack, atSec?: number) => {
+      const el = audio()
+      setTrack((prev) => {
+        if (!prev || prev.recordingId !== next.recordingId) {
+          el.src = api.audioUrl(next.recordingId)
+        }
+        return next
+      })
+      if (atSec != null) el.currentTime = atSec
+      void el.play()
+    },
+    [audio],
+  )
+
+  const seek = useCallback(
+    (sec: number) => {
+      const el = audio()
+      el.currentTime = sec
+      setCurrentTime(sec)
+    },
+    [audio],
+  )
+
+  const toggle = useCallback(() => {
+    const el = audio()
+    if (el.paused) void el.play()
+    else el.pause()
+  }, [audio])
+
+  const setRate = useCallback(
+    (next: number) => {
+      audio().playbackRate = next
+      setRateState(next)
+    },
+    [audio],
+  )
+
+  useEffect(() => () => audioRef.current?.pause(), [])
+
+  const value = useMemo(
+    () => ({ track, playing, currentTime, duration, rate, play, seek, toggle, setRate }),
+    [track, playing, currentTime, duration, rate, play, seek, toggle, setRate],
+  )
+  return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>
+}
+
+function IconButton({
+  label,
+  onClick,
+  primary,
+  children,
+}: {
+  label: string
+  onClick: () => void
+  primary?: boolean
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className={
+        primary
+          ? 'flex h-9 w-9 items-center justify-center rounded-full bg-accent text-accent-text-on transition-colors duration-120 hover:bg-accent-hover'
+          : 'flex h-8 w-8 items-center justify-center rounded-[6px] text-text-secondary transition-colors duration-120 hover:bg-bg'
+      }
+    >
+      {children}
+    </button>
+  )
+}
+
+export function PlayerBar() {
+  const { track, playing, currentTime, duration, rate, seek, toggle, setRate } = usePlayer()
+  const barRef = useRef<HTMLDivElement | null>(null)
+  const [hovering, setHovering] = useState(false)
+
+  if (!track) return null
+
+  const progress = duration > 0 ? currentTime / duration : 0
+
+  const onBarClick = (e: React.MouseEvent) => {
+    const rect = barRef.current?.getBoundingClientRect()
+    if (!rect || duration <= 0) return
+    seek(((e.clientX - rect.left) / rect.width) * duration)
+  }
+
+  return (
+    <div className="flex h-16 shrink-0 items-center gap-4 border-t border-border bg-surface px-4">
+      <div className="w-56 min-w-0">
+        <p className="truncate text-sm font-medium">{track.title}</p>
+        {track.subtitle && (
+          <p className="truncate text-xs text-text-tertiary">{track.subtitle}</p>
+        )}
+      </div>
+      <div className="flex items-center gap-1">
+        <IconButton label="10초 뒤로" onClick={() => seek(Math.max(0, currentTime - 10))}>
+          <RotateCcw size={18} strokeWidth={1.75} />
+        </IconButton>
+        <IconButton label={playing ? '일시정지' : '재생'} onClick={toggle} primary>
+          {playing ? (
+            <Pause size={18} strokeWidth={1.75} />
+          ) : (
+            <Play size={18} strokeWidth={1.75} />
+          )}
+        </IconButton>
+        <IconButton label="10초 앞으로" onClick={() => seek(currentTime + 10)}>
+          <RotateCw size={18} strokeWidth={1.75} />
+        </IconButton>
+      </div>
+      <div
+        ref={barRef}
+        role="slider"
+        aria-label="재생 위치"
+        aria-valuemin={0}
+        aria-valuemax={Math.round(duration)}
+        aria-valuenow={Math.round(currentTime)}
+        tabIndex={0}
+        className="flex-1 cursor-pointer py-3"
+        onClick={onBarClick}
+        onMouseEnter={() => setHovering(true)}
+        onMouseLeave={() => setHovering(false)}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowLeft') seek(Math.max(0, currentTime - 5))
+          if (e.key === 'ArrowRight') seek(currentTime + 5)
+        }}
+      >
+        <div className="w-full rounded-full bg-border" style={{ height: hovering ? 6 : 4 }}>
+          {/* 재생 커서는 트랜지션 없이 즉시 이동 */}
+          <div
+            className="h-full rounded-full bg-accent"
+            style={{ width: `${progress * 100}%` }}
+          />
+        </div>
+      </div>
+      <div className="tnum flex items-center gap-3 text-sm text-text-secondary">
+        <span>
+          {formatDuration(currentTime)} / {formatDuration(duration)}
+        </span>
+        <button
+          type="button"
+          onClick={() => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length])}
+          className="tnum h-6 rounded-[6px] border border-border-strong px-2 text-xs text-text-secondary hover:bg-bg"
+        >
+          {rate}x
+        </button>
+      </div>
+    </div>
+  )
+}
