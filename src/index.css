@@ -1,113 +1,190 @@
 @import "tailwindcss";
+@import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 
+/* 디자인 시스템 토큰 — 값은 디자인 시스템 문서가 정본. hex 기입은 이 파일만 허용 */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  --bg: #faf9f7;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --border: #e7e4e0;
+  --border-strong: #d5d1cb;
+  --text: #1c1b1a;
+  --text-secondary: #57534e;
+  --text-tertiary: #847e77;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --accent: #b45309;
+  --accent-hover: #92400e;
+  --accent-subtle: #fef3e2;
+  --accent-text-on: #ffffff;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --ok: #15803d;
+  --warn: #a16207;
+  --error: #b91c1c;
+  --info: #1d4ed8;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  --speaker-1: #2563eb;
+  --speaker-2: #c2410c;
+  --speaker-3: #0f766e;
+  --speaker-4: #7c3aed;
+  --speaker-5: #be185d;
+  --speaker-6: #4d7c0f;
+  --speaker-7: #0369a1;
+  --speaker-8: #92400e;
+
+  --shadow-1: 0 1px 2px rgb(28 27 26 / 0.06);
+  --shadow-2: 0 4px 12px rgb(28 27 26 / 0.1);
+  --shadow-3: 0 12px 32px rgb(28 27 26 / 0.16);
+
+  /* 상태 배지 배경 농도: 라이트 10%, 다크 18% */
+  --badge-alpha: 10%;
+}
+
+[data-theme="dark"] {
+  --bg: #161514;
+  --surface: #1f1e1c;
+  --surface-raised: #262523;
+  --border: #3a3835;
+  --border-strong: #4a4744;
+  --text: #edeae6;
+  --text-secondary: #a8a29e;
+  --text-tertiary: #78716c;
+
+  --accent: #f5a524;
+  --accent-hover: #fbbf24;
+  --accent-subtle: #3a2e1a;
+  --accent-text-on: #1c1207;
+
+  --ok: #4ade80;
+  --warn: #facc15;
+  --error: #f87171;
+  --info: #60a5fa;
+
+  --speaker-1: #93b4f8;
+  --speaker-2: #f0a48a;
+  --speaker-3: #7dd3c8;
+  --speaker-4: #c4b0f5;
+  --speaker-5: #f2a5c6;
+  --speaker-6: #b4d48a;
+  --speaker-7: #7fc8ed;
+  --speaker-8: #ddb07e;
+
+  /* 다크는 그림자 대신 표면 밝기 단차 */
+  --shadow-1: none;
+  --shadow-2: none;
+  --shadow-3: none;
+  --badge-alpha: 18%;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    --bg: #161514;
+    --surface: #1f1e1c;
+    --surface-raised: #262523;
+    --border: #3a3835;
+    --border-strong: #4a4744;
+    --text: #edeae6;
+    --text-secondary: #a8a29e;
+    --text-tertiary: #78716c;
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+    --accent: #f5a524;
+    --accent-hover: #fbbf24;
+    --accent-subtle: #3a2e1a;
+    --accent-text-on: #1c1207;
+
+    --ok: #4ade80;
+    --warn: #facc15;
+    --error: #f87171;
+    --info: #60a5fa;
+
+    --speaker-1: #93b4f8;
+    --speaker-2: #f0a48a;
+    --speaker-3: #7dd3c8;
+    --speaker-4: #c4b0f5;
+    --speaker-5: #f2a5c6;
+    --speaker-6: #b4d48a;
+    --speaker-7: #7fc8ed;
+    --speaker-8: #ddb07e;
+
+    --shadow-1: none;
+    --shadow-2: none;
+    --shadow-3: none;
+    --badge-alpha: 18%;
   }
 }
 
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-accent-text-on: var(--accent-text-on);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-error: var(--error);
+  --color-info: var(--info);
+
+  --font-sans: "Pretendard Variable", -apple-system, "Apple SD Gothic Neo",
+    "Malgun Gothic", sans-serif;
+  --font-mono: "SF Mono", ui-monospace, monospace;
+
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 13px;
+  --text-sm--line-height: 20px;
+  --text-base: 15px;
+  --text-base--line-height: 24px;
+  --text-lg: 17px;
+  --text-lg--line-height: 26px;
+  --text-xl: 20px;
+  --text-xl--line-height: 28px;
+  --text-2xl: 26px;
+  --text-2xl--line-height: 34px;
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+html,
+body,
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+  height: 100%;
 }
 
 body {
-  margin: 0;
-}
-
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
   font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+  line-height: 24px;
+}
+
+/* 숫자·타임스탬프 세로 정렬 */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 포커스 가시성 */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+}
+
+/* 검색 하이라이트 — 형광펜 노랑 금지 */
+mark {
+  background: var(--accent-subtle);
+  color: var(--text);
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
 }
