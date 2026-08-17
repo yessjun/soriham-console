@@ -12,7 +12,7 @@ export default function DetailPage() {
   const query = useAsync(() => api.recording(id!), [id])
 
   if (query.error) return <ErrorNote message={query.error} />
-  if (!query.data) return <ListSkeleton />
+  if (!query.data) return query.loading ? <ListSkeleton /> : null
   return <Detail key={query.data.id} initial={query.data} />
 }
 
@@ -126,7 +126,7 @@ function TitleEditor({
 
   const save = async () => {
     try {
-      await api.updateTitle(rec.id, value)
+      await api.updateTitle(rec.id, value.trim())
       onSaved({ ...rec, title: value.trim() || null })
       setEditing(false)
       setError(null)
@@ -158,6 +158,7 @@ function TitleEditor({
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => {
+            if (e.nativeEvent.isComposing) return
             if (e.key === 'Enter') void save()
             if (e.key === 'Escape') setEditing(false)
           }}
@@ -212,7 +213,7 @@ function TagEditor({
               type="button"
               aria-label={`태그 ${t.name} 제거`}
               onClick={() => void api.removeTag(rec.id, t.id).then(onChanged)}
-              className="ml-0.5 rounded-[6px] p-0.5 text-text-tertiary opacity-0 transition-opacity duration-120 group-hover:opacity-100 hover:text-error focus-visible:opacity-100"
+              className="ml-1 rounded-[6px] p-1 text-text-tertiary opacity-0 transition-opacity duration-120 group-hover:opacity-100 hover:text-error focus-visible:opacity-100"
             >
               <X size={12} strokeWidth={1.75} />
             </button>
@@ -224,6 +225,7 @@ function TagEditor({
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => {
+            if (e.nativeEvent.isComposing) return
               if (e.key === 'Enter') void add()
               if (e.key === 'Escape') setAdding(false)
             }}
@@ -281,6 +283,7 @@ function SegmentView({
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => {
+            if (e.nativeEvent.isComposing) return
               if (e.key === 'Enter' && name.trim()) {
                 void onRename(name.trim()).then(() => setRenaming(false))
               }

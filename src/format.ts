@@ -23,8 +23,9 @@ export function formatDate(iso: string | null | undefined): string {
 export function formatEta(sec: number | null | undefined): string {
   if (sec == null) return '-'
   if (sec < 60) return '1분 미만'
-  const h = Math.floor(sec / 3600)
-  const m = Math.round((sec % 3600) / 60)
+  const totalMin = Math.round(sec / 60)
+  const h = Math.floor(totalMin / 60)
+  const m = totalMin % 60
   return h > 0 ? `${h}시간 ${m}분` : `${m}분`
 }
 

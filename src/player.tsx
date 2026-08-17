@@ -43,6 +43,8 @@ const RATES = [1, 1.25, 1.5, 2]
 
 export function PlayerProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const trackIdRef = useRef<string | null>(null)
+  const rateRef = useRef(1)
   const [track, setTrack] = useState<PlayerTrack | null>(null)
   const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -66,12 +68,17 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const play = useCallback(
     (next: PlayerTrack, atSec?: number) => {
       const el = audio()
-      setTrack((prev) => {
-        if (!prev || prev.recordingId !== next.recordingId) {
-          el.src = api.audioUrl(next.recordingId)
-        }
-        return next
-      })
+      // src 교체는 상태 업데이터 밖에서(부수효과 시점 보장) ref로 판별한다
+      if (trackIdRef.current !== next.recordingId) {
+        trackIdRef.current = next.recordingId
+        el.src = api.audioUrl(next.recordingId)
+        // 새 소스 로드가 재생 위치·시간을 리셋하므로 화면 상태도 즉시 리셋
+        setCurrentTime(atSec ?? 0)
+        setDuration(0)
+        // 일부 브라우저는 소스 교체 시 playbackRate를 1로 되돌린다
+        el.playbackRate = rateRef.current
+      }
+      setTrack(next)
       if (atSec != null) el.currentTime = atSec
       void el.play()
     },
@@ -96,6 +103,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const setRate = useCallback(
     (next: number) => {
       audio().playbackRate = next
+      rateRef.current = next
       setRateState(next)
     },
     [audio],
@@ -129,7 +137,7 @@ function IconButton({
       onClick={onClick}
       className={
         primary
-          ? 'flex h-9 w-9 items-center justify-center rounded-full bg-accent text-accent-text-on transition-colors duration-120 hover:bg-accent-hover'
+          ? 'flex h-9 w-9 items-center justify-center rounded-[6px] bg-accent text-accent-text-on transition-colors duration-120 hover:bg-accent-hover'
           : 'flex h-8 w-8 items-center justify-center rounded-[6px] text-text-secondary transition-colors duration-120 hover:bg-bg'
       }
     >
@@ -208,7 +216,7 @@ export function PlayerBar() {
         <button
           type="button"
           onClick={() => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length])}
-          className="tnum h-6 rounded-[6px] border border-border-strong px-2 text-xs text-text-secondary hover:bg-bg"
+          className="tnum h-8 rounded-[6px] border border-border-strong px-2 text-xs text-text-secondary hover:bg-bg"
         >
           {rate}x
         </button>

@@ -8,7 +8,7 @@ import { EmptyState, ErrorNote, ListSkeleton, StatusBadge, TagChip } from '../co
 
 const PAGE_SIZE = 50
 
-const STATUS_FILTERS = ['전체', 'pending', 'transcribing', 'enriching', 'done', 'error', 'missing']
+const STATUS_FILTERS = ['전체', 'pending', 'transcribing', 'diarizing', 'enriching', 'done', 'error', 'missing', 'duplicate']
 
 export default function LibraryPage() {
   const [status, setStatus] = useState('전체')
@@ -95,7 +95,7 @@ function Row({ item }: { item: RecordingSummary }) {
   return (
     <Link
       to={`/recordings/${item.id}`}
-      className="flex min-h-14 flex-col justify-center gap-0.5 border-b border-border px-4 py-2 transition-colors duration-120 last:border-b-0 hover:bg-bg"
+      className="flex min-h-14 flex-col justify-center gap-1 border-b border-border px-4 py-2 transition-colors duration-120 last:border-b-0 hover:bg-bg"
     >
       <span className="truncate text-lg font-semibold">{item.title ?? item.filename}</span>
       <span className="flex items-center gap-2 text-sm text-text-secondary">

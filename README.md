@@ -4,8 +4,15 @@
 녹음 라이브러리, 전사 열람과 구간 재생, 전체 검색, 태그, 처리 현황 대시보드 화면을
 맡습니다.
 
-아직 코드가 없는 부트스트랩 상태입니다. 예정 스택: React, TypeScript, Vite,
-Tailwind CSS.
+스택: React, TypeScript, Vite, Tailwind CSS. 라이브러리, 상세(화자별 전사와 구간
+재생), 전체 검색, 태그, 대시보드 화면을 제공합니다.
+
+## 실행
+
+```bash
+npm install
+npm run dev   # http://localhost:5174 아님 — vite 기본 포트, /api는 8200으로 프록시
+```
 
 ## 전체 아키텍처
 

@@ -4,7 +4,7 @@ import { Activity } from 'lucide-react'
 import { api } from '../api'
 import { useAsync } from '../hooks'
 import { formatDate, formatDuration, formatEta } from '../format'
-import { EmptyState, ErrorNote, StatusBadge } from '../components/ui'
+import { EmptyState, ErrorNote, ListSkeleton, StatusBadge } from '../components/ui'
 
 const REFRESH_MS = 5000
 
@@ -37,7 +37,14 @@ export default function DashboardPage() {
     )
   }
   const stats = query.data
-  if (!stats) return null
+  if (!stats) {
+    return query.loading ? (
+      <div className="px-6 py-6">
+        <h2 className="mb-4 text-2xl font-bold tracking-[-0.01em]">대시보드</h2>
+        <ListSkeleton rows={3} />
+      </div>
+    ) : null
+  }
 
   const counts = new Map(stats.by_status.map((s) => [s.status, s]))
   const totalCount = stats.by_status.reduce((acc, s) => acc + s.count, 0)
@@ -105,7 +112,7 @@ export default function DashboardPage() {
                   <Link
                     key={rec.id}
                     to={`/recordings/${rec.id}`}
-                    className="flex min-h-14 flex-col justify-center gap-0.5 border-b border-border px-4 py-2 transition-colors duration-120 last:border-b-0 hover:bg-bg"
+                    className="flex min-h-14 flex-col justify-center gap-1 border-b border-border px-4 py-2 transition-colors duration-120 last:border-b-0 hover:bg-bg"
                   >
                     <span className="truncate text-sm font-medium">
                       {rec.title ?? rec.filename}
