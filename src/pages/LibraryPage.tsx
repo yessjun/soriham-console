@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { FolderOpen } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { FolderOpen, X } from 'lucide-react'
 import { api, type RecordingSummary } from '../api'
 import { useAsync } from '../hooks'
 import { formatDate, formatDuration } from '../format'
@@ -13,9 +13,12 @@ const STATUS_FILTERS = ['전체', 'pending', 'transcribing', 'enriching', 'done'
 export default function LibraryPage() {
   const [status, setStatus] = useState('전체')
   const [limit, setLimit] = useState(PAGE_SIZE)
+  const [params, setParams] = useSearchParams()
+  const tag = params.get('tag') ?? undefined
+  const tagName = params.get('tagName') ?? undefined
   const query = useAsync(
-    () => api.listRecordings({ status: status === '전체' ? undefined : status, limit }),
-    [status, limit],
+    () => api.listRecordings({ status: status === '전체' ? undefined : status, tag, limit }),
+    [status, tag, limit],
   )
 
   return (
@@ -26,6 +29,18 @@ export default function LibraryPage() {
           <span className="tnum text-sm text-text-secondary">{query.data.total}개</span>
         )}
       </div>
+      {tag && (
+        <div className="mb-3">
+          <button
+            type="button"
+            onClick={() => setParams({})}
+            className="inline-flex h-8 items-center gap-1 rounded-[6px] bg-accent-subtle px-3 text-sm font-medium text-accent"
+          >
+            태그: {tagName ?? '선택됨'}
+            <X size={14} strokeWidth={1.75} />
+          </button>
+        </div>
+      )}
       <div className="mb-4 flex gap-1">
         {STATUS_FILTERS.map((s) => (
           <button

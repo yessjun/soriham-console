@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { Check, Pencil, Plus, X } from 'lucide-react'
 import { api, type RecordingDetail, type Segment } from '../api'
 import { useAsync } from '../hooks'
@@ -19,6 +19,25 @@ export default function DetailPage() {
 function Detail({ initial }: { initial: RecordingDetail }) {
   const [rec, setRec] = useState(initial)
   const player = usePlayer()
+  const [params] = useSearchParams()
+
+  // 검색 히트에서 넘어온 경우(?t=초) 해당 세그먼트로 스크롤
+  const tParam = params.get('t')
+  const focusIdx =
+    tParam != null
+      ? (rec.segments.find(
+          (s) => s.start_sec <= Number(tParam) && Number(tParam) < s.end_sec,
+        )?.idx ??
+        rec.segments.find((s) => s.start_sec >= Number(tParam))?.idx ??
+        null)
+      : null
+
+  useEffect(() => {
+    if (focusIdx == null) return
+    document
+      .getElementById(`seg-${focusIdx}`)
+      ?.scrollIntoView({ block: 'center' })
+  }, [focusIdx])
 
   const speakerOrder = [...new Set(rec.segments.map((s) => s.speaker_key).filter(Boolean))] as string[]
   const speakerColor = (key: string | null): string | undefined => {
@@ -68,9 +87,10 @@ function Detail({ initial }: { initial: RecordingDetail }) {
                 color={speakerColor(seg.speaker_key)}
                 label={speakerLabel(seg.speaker_key)}
                 active={
-                  isCurrent &&
-                  player.currentTime >= seg.start_sec &&
-                  player.currentTime < seg.end_sec
+                  (isCurrent &&
+                    player.currentTime >= seg.start_sec &&
+                    player.currentTime < seg.end_sec) ||
+                  (!isCurrent && seg.idx === focusIdx)
                 }
                 onPlay={() => player.play(track, seg.start_sec)}
                 onRename={
@@ -247,6 +267,7 @@ function SegmentView({
 
   return (
     <div
+      id={`seg-${seg.idx}`}
       className="border-l-[3px] py-1 pl-3 transition-colors duration-120"
       style={{
         borderLeftColor: color ?? 'var(--border)',
