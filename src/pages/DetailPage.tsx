@@ -81,7 +81,10 @@ function Detail({ initial }: { initial: RecordingDetail }) {
           </p>
         ) : (
           <div className="flex flex-col gap-3">
-            {rec.segments.map((seg) => (
+            {rec.segments.map((seg) =>
+              seg.kind === 'noise' ? (
+                <NoiseMark key={seg.idx} seg={seg} />
+              ) : (
               <SegmentView
                 key={seg.idx}
                 seg={seg}
@@ -106,7 +109,8 @@ function Detail({ initial }: { initial: RecordingDetail }) {
                     : undefined
                 }
               />
-            ))}
+              ),
+            )}
           </div>
         )}
       </section>
@@ -319,6 +323,21 @@ function SegmentView({
         </button>
       </div>
       <p className="text-base">{seg.text}</p>
+    </div>
+  )
+}
+
+/** 말이 아닌 것으로 판정돼 받아적지 않은 구간 */
+function NoiseMark({ seg }: { seg: Segment }) {
+  return (
+    <div
+      id={`seg-${seg.idx}`}
+      className="flex items-center gap-2 border-l-[3px] border-border py-1 pl-3 text-sm text-text-tertiary"
+    >
+      <span className="tnum text-xs">
+        {formatDuration(seg.start_sec)} ~ {formatDuration(seg.end_sec)}
+      </span>
+      <span>소음 구간 (말소리로 보기 어려워 건너뜀)</span>
     </div>
   )
 }
