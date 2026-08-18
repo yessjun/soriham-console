@@ -4,7 +4,7 @@ import { Check, Pencil, Plus, X } from 'lucide-react'
 import { api, type RecordingDetail, type Segment } from '../api'
 import { useAsync } from '../hooks'
 import { formatDate, formatDuration } from '../format'
-import { ErrorNote, ListSkeleton, StatusBadge, TagChip } from '../components/ui'
+import { ErrorNote, ListSkeleton, ProgressLine, StatusBadge, TagChip } from '../components/ui'
 import { usePlayer } from '../player'
 
 export default function DetailPage() {
@@ -58,8 +58,9 @@ function Detail({ initial }: { initial: RecordingDetail }) {
         <span className="tnum">{formatDate(rec.recorded_at)}</span>
         <span aria-hidden>·</span>
         <span className="tnum">{formatDuration(rec.duration_sec)}</span>
-        <StatusBadge status={rec.status} />
+        <StatusBadge status={rec.status} progress={rec.progress} />
         {rec.language && <span>{rec.language}</span>}
+        <ProgressLine progress={rec.progress} etaSec={rec.eta_sec} />
       </div>
       {rec.title && (
         <p className="mt-1 font-mono text-xs text-text-tertiary">{rec.filename}</p>

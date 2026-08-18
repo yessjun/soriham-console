@@ -1,13 +1,23 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { FolderOpen, Upload, X } from 'lucide-react'
 import { api, type RecordingSummary } from '../api'
 import { useAsync } from '../hooks'
 import { formatDate, formatDuration } from '../format'
-import { EmptyState, ErrorNote, ListSkeleton, StatusBadge, TagChip } from '../components/ui'
+import {
+  EmptyState,
+  ErrorNote,
+  ListSkeleton,
+  ProgressLine,
+  StatusBadge,
+  TagChip,
+} from '../components/ui'
 import { AUDIO_ACCEPT, DropOverlay, UploadList, useUpload } from '../components/Uploader'
 
 const PAGE_SIZE = 50
+const REFRESH_MS = 5000
+// 이 상태들은 워커가 손대고 있으므로 화면을 주기적으로 새로고침한다
+const ACTIVE_STATUSES = ['pending', 'transcribing', 'diarizing', 'enriching']
 
 const STATUS_FILTERS = ['전체', 'pending', 'transcribing', 'diarizing', 'enriching', 'done', 'error', 'missing', 'duplicate']
 
@@ -24,6 +34,15 @@ export default function LibraryPage() {
   )
   const fileInput = useRef<HTMLInputElement | null>(null)
   const [dragging, setDragging] = useState(false)
+
+  // 처리 중인 항목이 있을 때만 폴링한다 (전부 done이면 재조회할 이유가 없다)
+  const hasActive = (query.data?.items ?? []).some((it) => ACTIVE_STATUSES.includes(it.status))
+  const reload = query.reload
+  useEffect(() => {
+    if (!hasActive) return
+    const timer = setInterval(reload, REFRESH_MS)
+    return () => clearInterval(timer)
+  }, [hasActive, reload])
 
   return (
     <div
@@ -152,11 +171,12 @@ function Row({ item }: { item: RecordingSummary }) {
         <span className="tnum">{formatDate(item.recorded_at)}</span>
         <span aria-hidden>·</span>
         <span className="tnum">{formatDuration(item.duration_sec)}</span>
-        <StatusBadge status={item.status} />
+        <StatusBadge status={item.status} progress={item.progress} />
         {item.tags.map((t) => (
           <TagChip key={t.id} name={t.name} />
         ))}
       </span>
+      <ProgressLine progress={item.progress} etaSec={item.eta_sec} />
     </Link>
   )
 }
