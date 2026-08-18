@@ -32,6 +32,8 @@ export interface Segment {
   end_sec: number
   speaker_key: string | null
   text: string
+  /** speech | noise — noise는 말이 아닌 구간으로 판정된 자리 */
+  kind: string
 }
 
 export interface RecordingDetail extends RecordingSummary {
