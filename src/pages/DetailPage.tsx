@@ -83,7 +83,11 @@ function Detail({ initial }: { initial: RecordingDetail }) {
           <div className="flex flex-col gap-3">
             {rec.segments.map((seg) =>
               seg.kind === 'noise' ? (
-                <NoiseMark key={seg.idx} seg={seg} />
+                <NoiseMark
+                  key={seg.idx}
+                  seg={seg}
+                  onPlay={() => player.play(track, seg.start_sec)}
+                />
               ) : (
               <SegmentView
                 key={seg.idx}
@@ -327,17 +331,23 @@ function SegmentView({
   )
 }
 
-/** 말이 아닌 것으로 판정돼 받아적지 않은 구간 */
-function NoiseMark({ seg }: { seg: Segment }) {
+/**
+ * 받아적지 못한 구간. 소리가 없었다는 뜻이 아니라 쓸 만한 텍스트를 못 얻었다는 뜻이다.
+ * 사람이 들으면 알아들을 수 있는 말이 섞여 있어서 눌러 들을 수 있게 둔다.
+ */
+function NoiseMark({ seg, onPlay }: { seg: Segment; onPlay: () => void }) {
   return (
-    <div
+    <button
+      type="button"
       id={`seg-${seg.idx}`}
-      className="flex items-center gap-2 border-l-[3px] border-border py-1 pl-3 text-sm text-text-tertiary"
+      onClick={onPlay}
+      title="이 구간부터 재생"
+      className="flex w-full items-center gap-2 border-l-[3px] border-border py-1 pl-3 text-left text-sm text-text-tertiary transition-colors duration-120 hover:text-accent"
     >
       <span className="tnum text-xs">
         {formatDuration(seg.start_sec)} ~ {formatDuration(seg.end_sec)}
       </span>
-      <span>소음 구간 (말소리로 보기 어려워 건너뜀)</span>
-    </div>
+      <span>받아적지 못한 구간 · 눌러서 듣기</span>
+    </button>
   )
 }
