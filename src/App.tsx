@@ -16,6 +16,7 @@ import SearchPage from './pages/SearchPage'
 import TagsPage from './pages/TagsPage'
 import DashboardPage from './pages/DashboardPage'
 import { PlayerProvider, PlayerBar } from './player'
+import { UploadProvider } from './components/Uploader'
 
 const NAV = [
   { to: '/', label: '라이브러리', icon: Library },
@@ -50,6 +51,7 @@ export default function App() {
 
   return (
     <PlayerProvider>
+      <UploadProvider>
       <div className="flex h-full">
         <aside className="flex w-[220px] shrink-0 flex-col border-r border-border bg-surface">
           <div className="px-4 py-5">
@@ -98,6 +100,7 @@ export default function App() {
           <PlayerBar />
         </div>
       </div>
+      </UploadProvider>
     </PlayerProvider>
   )
 }

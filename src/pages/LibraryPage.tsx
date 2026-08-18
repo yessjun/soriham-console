@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { FolderOpen, X } from 'lucide-react'
+import { FolderOpen, Upload, X } from 'lucide-react'
 import { api, type RecordingSummary } from '../api'
 import { useAsync } from '../hooks'
 import { formatDate, formatDuration } from '../format'
 import { EmptyState, ErrorNote, ListSkeleton, StatusBadge, TagChip } from '../components/ui'
+import { AUDIO_ACCEPT, DropOverlay, UploadList, useUpload } from '../components/Uploader'
 
 const PAGE_SIZE = 50
 
@@ -16,18 +17,62 @@ export default function LibraryPage() {
   const [params, setParams] = useSearchParams()
   const tag = params.get('tag') ?? undefined
   const tagName = params.get('tagName') ?? undefined
+  const uploads = useUpload()
   const query = useAsync(
     () => api.listRecordings({ status: status === '전체' ? undefined : status, tag, limit }),
-    [status, tag, limit],
+    [status, tag, limit, uploads.completed],
   )
+  const fileInput = useRef<HTMLInputElement | null>(null)
+  const [dragging, setDragging] = useState(false)
 
   return (
-    <div className="px-6 py-6">
+    <div
+      className="relative px-6 py-6"
+      onDragEnter={(e) => {
+        if (e.dataTransfer.types.includes('Files')) setDragging(true)
+      }}
+      onDragOver={(e) => {
+        if (e.dataTransfer.types.includes('Files')) e.preventDefault()
+      }}
+      onDragLeave={(e) => {
+        // 자식 사이 이동은 무시하고 컨테이너 밖으로 나갈 때만 끈다. 깊이를 세면
+        // 드래그 도중 자식이 언마운트될 때 카운터가 새서 오버레이가 남는다
+        const next = e.relatedTarget as Node | null
+        if (!next || !e.currentTarget.contains(next)) setDragging(false)
+      }}
+      onDrop={(e) => {
+        setDragging(false)
+        if (!e.dataTransfer.types.includes('Files')) return
+        e.preventDefault()
+        uploads.add(e.dataTransfer.files)
+      }}
+    >
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-2xl font-bold tracking-[-0.01em]">라이브러리</h2>
-        {query.data && (
-          <span className="tnum text-sm text-text-secondary">{query.data.total}개</span>
-        )}
+        <div className="flex items-center gap-3">
+          {query.data && (
+            <span className="tnum text-sm text-text-secondary">{query.data.total}개</span>
+          )}
+          <button
+            type="button"
+            onClick={() => fileInput.current?.click()}
+            className="flex h-9 items-center gap-2 rounded-[6px] bg-accent px-3.5 text-sm font-medium text-accent-text-on transition-colors duration-120 hover:bg-accent-hover"
+          >
+            <Upload size={18} strokeWidth={1.75} />
+            업로드
+          </button>
+          <input
+            ref={fileInput}
+            type="file"
+            multiple
+            accept={AUDIO_ACCEPT}
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files) uploads.add(e.target.files)
+              e.target.value = ''
+            }}
+          />
+        </div>
       </div>
       {tag && (
         <div className="mb-3">
@@ -61,32 +106,37 @@ export default function LibraryPage() {
         ))}
       </div>
 
-      {query.error && <ErrorNote message={query.error} />}
-      {query.loading && !query.data && <ListSkeleton />}
-      {query.data && query.data.items.length === 0 && (
-        <EmptyState
-          icon={FolderOpen}
-          message="등록된 녹음이 없습니다. 녹음 폴더 스캔 후 표시됩니다."
-        />
-      )}
-      {query.data && query.data.items.length > 0 && (
-        <div className="overflow-hidden rounded-[10px] border border-border bg-surface">
-          {query.data.items.map((item) => (
-            <Row key={item.id} item={item} />
-          ))}
-        </div>
-      )}
-      {query.data && query.data.items.length < query.data.total && (
-        <div className="flex justify-center py-4">
-          <button
-            type="button"
-            onClick={() => setLimit((l) => l + PAGE_SIZE)}
-            className="h-8 rounded-[6px] border border-border-strong bg-surface px-3 text-sm text-text hover:bg-bg"
-          >
-            더 보기
-          </button>
-        </div>
-      )}
+      <UploadList />
+
+      <div className="relative min-h-[240px]">
+        <DropOverlay active={dragging} />
+        {query.error && <ErrorNote message={query.error} />}
+        {query.loading && !query.data && <ListSkeleton />}
+        {query.data && query.data.items.length === 0 && (
+          <EmptyState
+            icon={FolderOpen}
+            message="등록된 녹음이 없습니다. 파일을 끌어다 놓거나 업로드 버튼을 누르세요."
+          />
+        )}
+        {query.data && query.data.items.length > 0 && (
+          <div className="overflow-hidden rounded-[10px] border border-border bg-surface">
+            {query.data.items.map((item) => (
+              <Row key={item.id} item={item} />
+            ))}
+          </div>
+        )}
+        {query.data && query.data.items.length < query.data.total && (
+          <div className="flex justify-center py-4">
+            <button
+              type="button"
+              onClick={() => setLimit((l) => l + PAGE_SIZE)}
+              className="h-8 rounded-[6px] border border-border-strong bg-surface px-3 text-sm text-text hover:bg-bg"
+            >
+              더 보기
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

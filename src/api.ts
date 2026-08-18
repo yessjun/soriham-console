@@ -56,6 +56,29 @@ export interface Stats {
   recent_errors: RecordingSummary[]
 }
 
+/** 서버가 돌려준 detail을 사람이 읽을 문자열로 (409는 객체로 온다) */
+function detailMessage(detail: unknown, fallback: string): string {
+  if (typeof detail === 'string') return detail
+  if (detail && typeof detail === 'object' && 'message' in detail) {
+    const message = (detail as { message: unknown }).message
+    if (typeof message === 'string') return message
+  }
+  return fallback
+}
+
+/** 업로드 실패 — 중복이면 기존 녹음 id가 실린다 */
+export class UploadError extends Error {
+  status: number
+  recordingId?: string
+
+  constructor(message: string, status: number, recordingId?: string) {
+    super(message)
+    this.name = 'UploadError'
+    this.status = status
+    this.recordingId = recordingId
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const resp = await fetch(path, {
     headers: init?.body ? { 'content-type': 'application/json' } : undefined,
@@ -65,7 +88,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     let detail = `요청 실패 (${resp.status})`
     try {
       const body = await resp.json()
-      if (typeof body.detail === 'string') detail = body.detail
+      detail = detailMessage(body.detail, detail)
     } catch {
       // 본문 없는 오류는 상태 코드 메시지 유지
     }
@@ -115,6 +138,51 @@ export const api = {
   },
   stats() {
     return request<Stats>('/api/stats')
+  },
+  /**
+   * 오디오 업로드. fetch는 업로드 진행률을 주지 못해 XHR을 쓴다.
+   * 취소하려면 돌려받은 abort()를 호출한다.
+   */
+  uploadRecording(
+    file: File,
+    onProgress?: (ratio: number) => void,
+  ): { promise: Promise<RecordingSummary>; abort: () => void } {
+    const xhr = new XMLHttpRequest()
+    const promise = new Promise<RecordingSummary>((resolve, reject) => {
+      const form = new FormData()
+      form.append('file', file)
+      xhr.open('POST', '/api/recordings')
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) onProgress?.(e.loaded / e.total)
+      })
+      xhr.addEventListener('load', () => {
+        let body: { detail?: unknown } = {}
+        try {
+          body = JSON.parse(xhr.responseText)
+        } catch {
+          // 본문 없는 응답은 상태 코드 메시지로 처리
+        }
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(body as unknown as RecordingSummary)
+          return
+        }
+        const recordingId =
+          body.detail && typeof body.detail === 'object' && 'recording_id' in body.detail
+            ? ((body.detail as { recording_id: unknown }).recording_id ?? undefined)
+            : undefined
+        reject(
+          new UploadError(
+            detailMessage(body.detail, `업로드 실패 (${xhr.status})`),
+            xhr.status,
+            typeof recordingId === 'string' ? recordingId : undefined,
+          ),
+        )
+      })
+      xhr.addEventListener('error', () => reject(new UploadError('업로드 중 연결이 끊겼습니다', 0)))
+      xhr.addEventListener('abort', () => reject(new UploadError('업로드를 취소했습니다', 0)))
+      xhr.send(form)
+    })
+    return { promise, abort: () => xhr.abort() }
   },
   audioUrl(id: string) {
     return `/api/recordings/${id}/audio`
