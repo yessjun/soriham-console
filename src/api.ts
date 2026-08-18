@@ -15,6 +15,10 @@ export interface RecordingSummary {
   status: string
   language: string | null
   tags: Tag[]
+  /** 처리 중일 때만 채워진다 (0~1) */
+  progress: number | null
+  /** 남은 시간 추정(초). 근거가 없으면 null */
+  eta_sec: number | null
 }
 
 export interface RecordingList {
