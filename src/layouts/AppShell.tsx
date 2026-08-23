@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { ChartColumn, Library, Monitor, Moon, Search, Sun, Tags } from 'lucide-react'
+import { ChartColumn, Library, Monitor, Moon, Search, Sun, Tags, UserCheck } from 'lucide-react'
 import { Avatar } from '../components/Avatar'
 import { Menu } from '../components/Menu'
 import { PlayerBar } from '../player'
@@ -44,6 +44,20 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [navigate])
 
   const ThemeIcon = THEME_ICONS[theme]
+  // 관리 화면은 서비스 관리자만 본다. 능력 목록으로 정하고 역할을 다시 계산하지 않는다
+  const navItems = [
+    ...NAV.map((item) => ({ ...item, badge: 0 })),
+    ...(me?.capabilities.includes('admin')
+      ? [
+          {
+            to: '/settings/admin',
+            label: '계정 관리',
+            icon: UserCheck,
+            badge: me.pending_user_count ?? 0,
+          },
+        ]
+      : []),
+  ]
 
   return (
     <div className="flex h-full">
@@ -65,7 +79,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         )}
         <nav className="flex flex-col gap-1 px-2">
-          {NAV.map(({ to, label, icon: Icon }) => (
+          {navItems.map(({ to, label, icon: Icon, badge }) => (
             <NavLink
               key={to}
               to={to}
@@ -79,7 +93,12 @@ export function AppShell({ children }: { children: ReactNode }) {
               }
             >
               <Icon size={18} strokeWidth={1.75} />
-              {label}
+              <span className="flex-1">{label}</span>
+              {badge ? (
+                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-xs font-medium text-accent-text-on">
+                  {badge}
+                </span>
+              ) : null}
             </NavLink>
           ))}
         </nav>

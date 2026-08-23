@@ -13,6 +13,7 @@ import LoginPage from './pages/LoginPage'
 import SignupPage from './pages/SignupPage'
 import PendingPage from './pages/PendingPage'
 import NotFoundPage from './pages/NotFoundPage'
+import AdminPage from './pages/AdminPage'
 
 // 이 파일은 라우트 표만 담는다. 화면 구성은 레이아웃이, 통과 여부는 RequireAuth가 맡는다
 export default function App() {
@@ -62,6 +63,14 @@ export default function App() {
               element={
                 <RequireAuth>
                   <DashboardPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/settings/admin"
+              element={
+                <RequireAuth>
+                  <AdminPage />
                 </RequireAuth>
               }
             />
