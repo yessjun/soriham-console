@@ -30,6 +30,16 @@ export interface Me {
   pending_user_count: number | null
 }
 
+export interface Account {
+  id: string
+  email: string
+  name: string
+  /** pending | active | rejected | disabled */
+  status: string
+  signup_note: string | null
+  requested_at: string
+}
+
 export interface Tag {
   id: string
   name: string
@@ -132,6 +142,15 @@ export const api = {
   },
   logout() {
     return request<void>('/api/auth/logout', { method: 'POST' })
+  },
+  accounts(status: string) {
+    return request<Account[]>(`/api/admin/users?${new URLSearchParams({ status })}`)
+  },
+  setAccountStatus(id: string, status: string) {
+    return request<Me>(`/api/admin/users/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    })
   },
   listRecordings(
     workspaceId: string,
