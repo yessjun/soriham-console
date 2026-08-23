@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { Check, Pencil, Plus, X } from 'lucide-react'
-import { api, type RecordingDetail, type Segment } from '../api'
+import { api, type RecordingDetail } from '../api'
 import { useAsync } from '../hooks'
 import { formatDate, formatDuration } from '../format'
 import { ErrorNote, ListSkeleton, ProgressLine, StatusBadge, TagChip } from '../components/ui'
-import { usePlayer } from '../player'
+import { Transcript } from '../components/Transcript'
 
 export default function DetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -18,7 +18,6 @@ export default function DetailPage() {
 
 function Detail({ initial }: { initial: RecordingDetail }) {
   const [rec, setRec] = useState(initial)
-  const player = usePlayer()
   const [params] = useSearchParams()
 
   // 검색 히트에서 넘어온 경우(?t=초) 해당 세그먼트로 스크롤
@@ -39,17 +38,7 @@ function Detail({ initial }: { initial: RecordingDetail }) {
       ?.scrollIntoView({ block: 'center' })
   }, [focusIdx])
 
-  const speakerOrder = [...new Set(rec.segments.map((s) => s.speaker_key).filter(Boolean))] as string[]
-  const speakerColor = (key: string | null): string | undefined => {
-    if (!key) return undefined
-    const i = speakerOrder.indexOf(key)
-    return i >= 0 ? `var(--speaker-${(i % 8) + 1})` : undefined
-  }
-  const speakerLabel = (key: string | null): string =>
-    key ? (rec.speaker_names[key] ?? key) : '화자 미상'
-
   const track = { recordingId: rec.id, title: rec.title ?? rec.filename }
-  const isCurrent = player.track?.recordingId === rec.id
 
   return (
     <div className="mx-auto max-w-[720px] px-6 py-6">
@@ -75,48 +64,20 @@ function Detail({ initial }: { initial: RecordingDetail }) {
       <TagEditor rec={rec} onChanged={(tags) => setRec({ ...rec, tags })} />
 
       <section className="mt-6">
-        {rec.segments.length === 0 ? (
-          <p className="py-8 text-center text-sm text-text-secondary">
-            아직 전사 결과가 없습니다. 변환이 끝나면 표시됩니다.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {rec.segments.map((seg) =>
-              seg.kind === 'noise' ? (
-                <NoiseMark
-                  key={seg.idx}
-                  seg={seg}
-                  onPlay={() => player.play(track, seg.start_sec)}
-                />
-              ) : (
-              <SegmentView
-                key={seg.idx}
-                seg={seg}
-                color={speakerColor(seg.speaker_key)}
-                label={speakerLabel(seg.speaker_key)}
-                active={
-                  (isCurrent &&
-                    player.currentTime >= seg.start_sec &&
-                    player.currentTime < seg.end_sec) ||
-                  (!isCurrent && seg.idx === focusIdx)
+        <Transcript
+          segments={rec.segments}
+          speakerNames={rec.speaker_names}
+          track={track}
+          focusIdx={focusIdx ?? undefined}
+          onRename={
+            rec.can_edit
+              ? async (speakerKey, name) => {
+                  await api.renameSpeaker(rec.id, speakerKey, name)
+                  setRec({ ...rec, speaker_names: { ...rec.speaker_names, [speakerKey]: name } })
                 }
-                onPlay={() => player.play(track, seg.start_sec)}
-                onRename={
-                  seg.speaker_key
-                    ? async (name: string) => {
-                        await api.renameSpeaker(rec.id, seg.speaker_key!, name)
-                        setRec({
-                          ...rec,
-                          speaker_names: { ...rec.speaker_names, [seg.speaker_key!]: name },
-                        })
-                      }
-                    : undefined
-                }
-              />
-              ),
-            )}
-          </div>
-        )}
+              : undefined
+          }
+        />
       </section>
     </div>
   )
@@ -255,99 +216,5 @@ function TagEditor({
       </div>
       {error && <p className="mt-1 text-sm text-error">{error}</p>}
     </div>
-  )
-}
-
-function SegmentView({
-  seg,
-  color,
-  label,
-  active,
-  onPlay,
-  onRename,
-}: {
-  seg: Segment
-  color: string | undefined
-  label: string
-  active: boolean
-  onPlay: () => void
-  onRename?: (name: string) => Promise<void>
-}) {
-  const [renaming, setRenaming] = useState(false)
-  const [name, setName] = useState(label)
-
-  return (
-    <div
-      id={`seg-${seg.idx}`}
-      className="border-l-[3px] py-1 pl-3 transition-colors duration-120"
-      style={{
-        borderLeftColor: color ?? 'var(--border)',
-        background: active ? 'var(--accent-subtle)' : undefined,
-      }}
-    >
-      <div className="flex items-baseline gap-2">
-        {renaming && onRename ? (
-          <input
-            autoFocus
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => {
-            if (e.nativeEvent.isComposing) return
-              if (e.key === 'Enter' && name.trim()) {
-                void onRename(name.trim()).then(() => setRenaming(false))
-              }
-              if (e.key === 'Escape') setRenaming(false)
-            }}
-            onBlur={() => setRenaming(false)}
-            className="h-6 w-32 rounded-[6px] border border-border-strong bg-surface px-2 text-sm"
-          />
-        ) : (
-          <button
-            type="button"
-            title={onRename ? '화자 이름 수정' : undefined}
-            onClick={() => {
-              if (onRename) {
-                setName(label)
-                setRenaming(true)
-              }
-            }}
-            className="text-sm font-semibold"
-            style={{ color: color ?? 'var(--text-secondary)' }}
-          >
-            {label}
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={onPlay}
-          title="이 구간부터 재생"
-          className="tnum text-xs text-text-tertiary hover:text-accent"
-        >
-          {formatDuration(seg.start_sec)}
-        </button>
-      </div>
-      <p className="text-base">{seg.text}</p>
-    </div>
-  )
-}
-
-/**
- * 받아적지 못한 구간. 소리가 없었다는 뜻이 아니라 쓸 만한 텍스트를 못 얻었다는 뜻이다.
- * 사람이 들으면 알아들을 수 있는 말이 섞여 있어서 눌러 들을 수 있게 둔다.
- */
-function NoiseMark({ seg, onPlay }: { seg: Segment; onPlay: () => void }) {
-  return (
-    <button
-      type="button"
-      id={`seg-${seg.idx}`}
-      onClick={onPlay}
-      title="이 구간부터 재생"
-      className="flex w-full items-center gap-2 border-l-[3px] border-border py-1 pl-3 text-left text-sm text-text-tertiary transition-colors duration-120 hover:text-accent"
-    >
-      <span className="tnum text-xs">
-        {formatDuration(seg.start_sec)} ~ {formatDuration(seg.end_sec)}
-      </span>
-      <span>받아적지 못한 구간 · 눌러서 듣기</span>
-    </button>
   )
 }
