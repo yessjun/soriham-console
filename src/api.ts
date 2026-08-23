@@ -40,6 +40,63 @@ export interface Account {
   requested_at: string
 }
 
+export interface Usage {
+  used_minutes: number
+  /** 비어 있으면 무제한 */
+  quota_minutes: number | null
+  used_bytes: number
+  quota_bytes: number | null
+  window_days: number
+}
+
+export interface SharedRecording {
+  title: string | null
+  summary: string | null
+  recorded_at: string | null
+  duration_sec: number | null
+  /** done | processing | unavailable — 내부 상태를 그대로 주지 않는다 */
+  status: string
+  language: string | null
+  tags: Tag[]
+  progress: number | null
+  eta_sec: number | null
+  allow_audio: boolean
+  speaker_names: Record<string, string>
+  segments: Segment[]
+}
+
+export interface ShareUser {
+  id: string
+  email: string
+  name: string | null
+  permission: string
+  /** 아직 가입하지 않은 이메일. 승인되면 계정에 이어진다 */
+  pending: boolean
+}
+
+export interface ShareLink {
+  id: string
+  label: string | null
+  has_password: boolean
+  allow_audio: boolean
+  allow_speaker_names: boolean
+  expires_at: string | null
+  view_count: number
+  last_viewed_at: string | null
+  created_at: string
+}
+
+export interface IssuedShareLink extends ShareLink {
+  /** 원문 토큰은 발급 응답에만 실린다 */
+  token: string
+}
+
+export interface SharePanel {
+  users: ShareUser[]
+  links: ShareLink[]
+  workspace_name: string
+}
+
 export interface Tag {
   id: string
   name: string
@@ -259,6 +316,54 @@ export const api = {
       xhr.send(form)
     })
     return { promise, abort: () => xhr.abort() }
+  },
+  usage(workspaceId: string) {
+    return request<Usage>(`/api/workspaces/${workspaceId}/usage`)
+  },
+  sharedRecording(token: string) {
+    return request<SharedRecording>(`/api/shared/${encodeURIComponent(token)}`)
+  },
+  unlockShared(token: string, password: string) {
+    return request<void>(`/api/shared/${encodeURIComponent(token)}/unlock`, {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+    })
+  },
+  sharedAudioUrl(token: string) {
+    return apiUrl(`/api/shared/${encodeURIComponent(token)}/audio`)
+  },
+  sharePanel(id: string) {
+    return request<SharePanel>(`/api/recordings/${id}/shares`)
+  },
+  addShare(id: string, email: string, permission: string) {
+    return request<ShareUser>(`/api/recordings/${id}/shares`, {
+      method: 'POST',
+      body: JSON.stringify({ email, permission }),
+    })
+  },
+  removeShare(id: string, shareId: string) {
+    return request<void>(`/api/recordings/${id}/shares/${shareId}`, { method: 'DELETE' })
+  },
+  createLink(
+    id: string,
+    body: {
+      label?: string
+      password?: string
+      allow_audio: boolean
+      allow_speaker_names: boolean
+      expires_in_days: number | null
+    },
+  ) {
+    return request<IssuedShareLink>(`/api/recordings/${id}/links`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  },
+  revokeLink(id: string, linkId: string) {
+    return request<void>(`/api/recordings/${id}/links/${linkId}`, { method: 'DELETE' })
+  },
+  deleteRecording(id: string) {
+    return request<void>(`/api/recordings/${id}`, { method: 'DELETE' })
   },
   audioUrl(id: string) {
     return apiUrl(`/api/recordings/${id}/audio`)

@@ -15,6 +15,7 @@ import PendingPage from './pages/PendingPage'
 import NotFoundPage from './pages/NotFoundPage'
 import AdminPage from './pages/AdminPage'
 import SharedPage from './pages/SharedPage'
+import PublicRecordingPage from './pages/PublicRecordingPage'
 
 // 이 파일은 라우트 표만 담는다. 화면 구성은 레이아웃이, 통과 여부는 RequireAuth가 맡는다
 export default function App() {
@@ -24,6 +25,8 @@ export default function App() {
         <PlayerProvider>
           <UploadProvider>
           <Routes>
+            {/* 로그인 없이 열리는 유일한 화면. 앱 껍데기를 쓰지 않는다 */}
+            <Route path="/s/:token" element={<PublicRecordingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/pending" element={<PendingPage />} />

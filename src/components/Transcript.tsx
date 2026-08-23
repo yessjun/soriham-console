@@ -15,6 +15,8 @@ type Props = {
   onRename?: RenameFn
   /** 링크가 화자 이름을 막았으면 라벨만 남는다 */
   showSpeakerNames?: boolean
+  /** 링크가 오디오를 막았으면 눌러서 듣는 어포던스를 그리지 않는다 */
+  playable?: boolean
 }
 
 /**
@@ -30,6 +32,7 @@ export function Transcript({
   focusIdx,
   onRename,
   showSpeakerNames = true,
+  playable = true,
 }: Props) {
   const { play, track: playing } = usePlayerControls()
   const { currentTime } = usePlayerTime()
@@ -58,7 +61,10 @@ export function Transcript({
   )
 
   // 자식이 memo로 걸러지려면 이 함수들이 매번 새로 만들어지면 안 된다
-  const playAt = useCallback((sec: number) => play(track, sec), [play, track])
+  const playAt = useCallback(
+    (sec: number) => (playable ? play(track, sec) : undefined),
+    [play, track, playable],
+  )
 
   const activeIdx = useMemo(() => {
     if (!isCurrent) return focusIdx ?? -1
@@ -77,7 +83,7 @@ export function Transcript({
     <div className="flex flex-col gap-3">
       {segments.map((seg) =>
         seg.kind === 'noise' ? (
-          <NoiseMark key={seg.idx} seg={seg} onPlay={playAt} />
+          <NoiseMark key={seg.idx} seg={seg} onPlay={playAt} playable={playable} />
         ) : (
           <SegmentView
             key={seg.idx}
@@ -86,6 +92,7 @@ export function Transcript({
             label={labelOf(seg.speaker_key)}
             active={seg.idx === activeIdx}
             onPlay={playAt}
+            playable={playable}
             onRename={onRename}
           />
         ),
@@ -97,10 +104,24 @@ export function Transcript({
 const NoiseMark = memo(function NoiseMark({
   seg,
   onPlay,
+  playable,
 }: {
   seg: Segment
   onPlay: (sec: number) => void
+  playable: boolean
 }) {
+  const range = `${formatDuration(seg.start_sec)} ~ ${formatDuration(seg.end_sec)}`
+  if (!playable) {
+    return (
+      <div
+        id={`seg-${seg.idx}`}
+        className="flex items-center gap-2 border-l-[3px] border-border py-1 pl-3 text-sm text-text-tertiary"
+      >
+        <span className="tnum text-xs">{range}</span>
+        <span>받아적지 못한 구간</span>
+      </div>
+    )
+  }
   return (
     <button
       type="button"
@@ -109,9 +130,7 @@ const NoiseMark = memo(function NoiseMark({
       title="이 구간부터 재생"
       className="flex w-full items-center gap-2 border-l-[3px] border-border py-1 pl-3 text-left text-sm text-text-tertiary transition-colors duration-120 hover:text-accent"
     >
-      <span className="tnum text-xs">
-        {formatDuration(seg.start_sec)} ~ {formatDuration(seg.end_sec)}
-      </span>
+      <span className="tnum text-xs">{range}</span>
       <span>받아적지 못한 구간, 눌러서 듣기</span>
     </button>
   )
@@ -123,6 +142,7 @@ const SegmentView = memo(function SegmentView({
   label,
   active,
   onPlay,
+  playable,
   onRename,
 }: {
   seg: Segment
@@ -130,6 +150,7 @@ const SegmentView = memo(function SegmentView({
   label: string
   active: boolean
   onPlay: (sec: number) => void
+  playable: boolean
   onRename?: RenameFn
 }) {
   const [renaming, setRenaming] = useState(false)
@@ -182,14 +203,19 @@ const SegmentView = memo(function SegmentView({
             {label}
           </span>
         )}
-        <button
-          type="button"
-          onClick={() => onPlay(seg.start_sec)}
-          title="이 구간부터 재생"
-          className="tnum text-xs text-text-tertiary hover:text-accent"
-        >
-          {formatDuration(seg.start_sec)}
-        </button>
+        {playable ? (
+          <button
+            type="button"
+            onClick={() => onPlay(seg.start_sec)}
+            title="이 구간부터 재생"
+            className="tnum text-xs text-text-tertiary hover:text-accent"
+          >
+            {formatDuration(seg.start_sec)}
+          </button>
+        ) : (
+          // 들을 수 없는 링크에서 눌러도 아무 일이 없으면 무엇이 잘못됐는지 알 수 없다
+          <span className="tnum text-xs text-text-tertiary">{formatDuration(seg.start_sec)}</span>
+        )}
       </div>
       <p className="text-base">{seg.text}</p>
     </div>
