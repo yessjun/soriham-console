@@ -12,11 +12,16 @@ type Props = {
   label: string
 }
 
+let seq = 0
+
 export function Menu({ trigger, items, label }: Props) {
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
   const root = useRef<HTMLDivElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
+  // 활성 항목을 배경색으로만 표시하면 화면을 못 보는 사람에게는 아무 일도 안 일어난다.
+  // 포커스는 트리거에 두고 활성 항목을 id로 알린다
+  const idBase = useRef(`menu-${++seq}`)
 
   useEffect(() => {
     if (!open) return
@@ -34,7 +39,20 @@ export function Menu({ trigger, items, label }: Props) {
   }
 
   function onKeyDown(event: React.KeyboardEvent) {
-    if (!open) return
+    if (!open) {
+      // 닫힌 상태에서 아래 화살표로 여는 것이 메뉴의 표준 조작이다
+      if (event.key === 'ArrowDown') {
+        event.preventDefault()
+        setOpen(true)
+        setActive(0)
+      }
+      return
+    }
+    if (event.key === 'Tab') {
+      // 포커스가 빠져나가는데 메뉴만 남아 떠 있으면 안 된다
+      setOpen(false)
+      return
+    }
     if (event.key === 'Escape') {
       event.preventDefault()
       close()
@@ -59,6 +77,8 @@ export function Menu({ trigger, items, label }: Props) {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={label}
+        aria-controls={open ? idBase.current : undefined}
+        aria-activedescendant={open ? `${idBase.current}-${active}` : undefined}
         onClick={() => {
           setOpen((v) => !v)
           setActive(0)
@@ -68,16 +88,19 @@ export function Menu({ trigger, items, label }: Props) {
       </button>
       {open && (
         <div
+          id={idBase.current}
           role="menu"
           aria-label={label}
           className="absolute right-0 top-[calc(100%+4px)] z-10 min-w-40 rounded-[10px] border border-border bg-surface-raised py-1 shadow-2"
         >
           {items.map((item, i) => (
             <button
-              key={item.label}
+              key={`${item.label}-${i}`}
+              id={`${idBase.current}-${i}`}
               role="menuitem"
               type="button"
               tabIndex={-1}
+              aria-current={i === active || undefined}
               onMouseEnter={() => setActive(i)}
               onClick={() => {
                 item.onSelect()

@@ -6,7 +6,7 @@ import { Menu } from '../components/Menu'
 import { PlayerBar } from '../player'
 import { applyTheme, loadTheme, nextTheme, type Theme } from '../theme'
 import { useAuth } from '../auth/context'
-import { setWorkspaceId } from '../workspace'
+import { useWorkspace } from '../workspace'
 
 const NAV = [
   { to: '/', label: '라이브러리', icon: Library },
@@ -23,20 +23,19 @@ export function AppShell({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
   const { state, logout } = useAuth()
   const me = state.phase === 'known' ? state.me : null
-  const [current, setCurrent] = useState(me?.default_workspace_id ?? '')
+  const { current, workspaces, select } = useWorkspace()
 
   useEffect(() => applyTheme(theme), [theme])
-
-  useEffect(() => {
-    if (me) setCurrent(me.default_workspace_id ?? me.workspaces[0]?.id ?? '')
-  }, [me])
 
   // 전역 검색 포커스: `/` 키
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== '/' || e.metaKey || e.ctrlKey) return
       const target = e.target as HTMLElement
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return
+      if (target.isContentEditable) return
+      // 모달이 떠 있으면 화면을 갈아치우지 않는다. 다이얼로그가 통째로 사라진다
+      if (document.querySelector('dialog[open]')) return
       e.preventDefault()
       navigate('/search')
     }
@@ -45,8 +44,6 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [navigate])
 
   const ThemeIcon = THEME_ICONS[theme]
-  const workspaces = me?.workspaces ?? []
-  const currentName = workspaces.find((w) => w.id === current)?.name ?? ''
 
   return (
     <div className="flex h-full">
@@ -57,20 +54,13 @@ export function AppShell({ children }: { children: ReactNode }) {
         {workspaces.length > 0 && (
           <div className="px-2 pb-3">
             <Menu
-              label="워크스페이스 전환"
+              label={`워크스페이스: ${current?.name ?? ''}`}
               trigger={
                 <span className="flex h-8 w-full items-center rounded-[6px] px-3 text-sm text-text-secondary hover:bg-bg">
-                  {currentName}
+                  {current?.name ?? ''}
                 </span>
               }
-              items={workspaces.map((w) => ({
-                label: w.name,
-                onSelect: () => {
-                  setCurrent(w.id)
-                  setWorkspaceId(w.id)
-                  navigate('/')
-                },
-              }))}
+              items={workspaces.map((w) => ({ label: w.name, onSelect: () => select(w.id) }))}
             />
           </div>
         )}
@@ -104,17 +94,15 @@ export function AppShell({ children }: { children: ReactNode }) {
           </button>
           {me && (
             <Menu
-              label="계정"
+              label={`계정: ${me.user.name}`}
               trigger={
                 <span className="flex h-8 w-full items-center gap-2 rounded-[6px] px-3 text-sm text-text-secondary hover:bg-bg">
                   <Avatar name={me.user.name} email={me.user.email} size={24} />
                   <span className="truncate">{me.user.name}</span>
                 </span>
               }
-              items={[
-                { label: '설정', onSelect: () => navigate('/settings') },
-                { label: '로그아웃', onSelect: () => void logout() },
-              ]}
+              // 설정 화면은 아직 없다. 못 하는 일은 그리지 않는다
+              items={[{ label: '로그아웃', onSelect: () => void logout() }]}
             />
           )}
         </div>

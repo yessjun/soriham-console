@@ -33,7 +33,8 @@ export default function PendingPage() {
   }, [status, refresh])
 
   if (state.phase === 'anonymous') return <Navigate to="/login" replace />
-  if (state.phase === 'checking') return null
+  // 빈 화면 대신 껍데기를 남긴다
+  if (state.phase === 'checking') return <AuthLayout title="소리함">{null}</AuthLayout>
   if (state.me.status === 'active') return <Navigate to="/" replace />
 
   const text = MESSAGE[state.me.status] ?? MESSAGE.pending

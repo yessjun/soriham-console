@@ -2,7 +2,7 @@
 
 import { apiUrl, csrfToken, detailMessage, request } from './http'
 
-export { ApiError, apiUrl, setUnauthorizedHandler } from './http'
+export { ApiError, apiUrl, setForbiddenHandler, setUnauthorizedHandler } from './http'
 
 export interface UserOut {
   id: string

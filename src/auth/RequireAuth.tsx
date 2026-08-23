@@ -24,7 +24,10 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     )
   }
   if (state.phase === 'anonymous') {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />
+    // 쿼리까지 기억한다. 경로만 담으면 태그 필터를 걸어 둔 사람이 재로그인 후 잃는다
+    return (
+      <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />
+    )
   }
   if (state.me.status !== 'active') {
     return <Navigate to="/pending" replace />

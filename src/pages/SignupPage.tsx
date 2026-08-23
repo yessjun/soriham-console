@@ -13,6 +13,9 @@ export default function SignupPage() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
+  // 확인이 끝나기 전에 폼을 그리면, 세션이 살아 있는 사람에게 로그인 폼이 스쳤다
+  // 사라진다. 규격이 금지한 바로 그 화면이다
+  if (state.phase === 'checking') return null
   if (state.phase === 'known') return <Navigate to="/" replace />
 
   function set(key: keyof typeof form) {
@@ -84,7 +87,11 @@ export default function SignupPage() {
           value={form.signup_note}
           onChange={set('signup_note')}
         />
-        {error && <p className="text-sm text-error">{error}</p>}
+        {error && (
+          <p role="alert" className="text-sm text-error">
+            {error}
+          </p>
+        )}
         <Button type="submit" variant="primary" busy={busy} className="w-full">
           신청하기
         </Button>

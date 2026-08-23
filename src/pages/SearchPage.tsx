@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { currentWorkspaceId } from '../workspace'
+import { useWorkspaceId } from '../workspace'
 import { Link } from 'react-router-dom'
 import { Search, SearchX } from 'lucide-react'
 import { api, type SearchHit } from '../api'
@@ -8,6 +8,7 @@ import { formatDate, formatDuration } from '../format'
 import { EmptyState, ErrorNote, ListSkeleton, StatusBadge } from '../components/ui'
 
 export default function SearchPage() {
+  const workspaceId = useWorkspaceId()
   const [input, setInput] = useState('')
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement | null>(null)
@@ -21,8 +22,8 @@ export default function SearchPage() {
   useEffect(() => inputRef.current?.focus(), [])
 
   const result = useAsync(
-    () => (query ? api.search(currentWorkspaceId(), query) : Promise.resolve({ hits: [] as SearchHit[] })),
-    [query],
+    () => (query ? api.search(workspaceId, query) : Promise.resolve({ hits: [] as SearchHit[] })),
+    [workspaceId, query],
   )
 
   return (

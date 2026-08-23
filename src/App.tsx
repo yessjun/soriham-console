@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthProvider'
+import { WorkspaceProvider } from './auth/WorkspaceProvider'
 import { RequireAuth } from './auth/RequireAuth'
 import { PlayerProvider } from './player'
 import { UploadProvider } from './components/Uploader'
@@ -17,8 +18,9 @@ import NotFoundPage from './pages/NotFoundPage'
 export default function App() {
   return (
     <AuthProvider>
-      <PlayerProvider>
-        <UploadProvider>
+      <WorkspaceProvider>
+        <PlayerProvider>
+          <UploadProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
@@ -72,8 +74,9 @@ export default function App() {
               }
             />
           </Routes>
-        </UploadProvider>
-      </PlayerProvider>
+          </UploadProvider>
+        </PlayerProvider>
+      </WorkspaceProvider>
     </AuthProvider>
   )
 }
