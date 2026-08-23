@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import { Link } from 'react-router-dom'
+import { currentWorkspaceId } from '../workspace'
 import { api, UploadError } from '../api'
 
 /** 서버가 받는 확장자 (api의 AUDIO_EXTENSIONS와 같은 목록) */
@@ -91,7 +92,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       while (next) {
         const { id, file } = next
         try {
-          const { promise } = api.uploadRecording(file, (ratio) =>
+          const { promise } = api.uploadRecording(currentWorkspaceId(), file, (ratio) =>
             setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ratio } : it))),
           )
           await promise
