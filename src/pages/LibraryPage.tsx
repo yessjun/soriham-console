@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useCan, useWorkspaceId } from '../workspace'
+import { UsageWarning } from '../components/UsageMeter'
 import { Link, useSearchParams } from 'react-router-dom'
 import { FolderOpen, Upload, X } from 'lucide-react'
 import { api, type RecordingSummary } from '../api'
@@ -101,6 +102,7 @@ export default function LibraryPage() {
           )}
         </div>
       </div>
+      <UsageWarning />
       {tag && (
         <div className="mb-3">
           <button

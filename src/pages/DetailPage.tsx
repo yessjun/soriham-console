@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
-import { Check, Pencil, Plus, X } from 'lucide-react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Check, Pencil, Plus, Share2, Trash2, X } from 'lucide-react'
 import { api, type RecordingDetail } from '../api'
 import { useAsync } from '../hooks'
 import { formatDate, formatDuration } from '../format'
 import { ErrorNote, ListSkeleton, ProgressLine, StatusBadge, TagChip } from '../components/ui'
 import { Transcript } from '../components/Transcript'
+import { Button } from '../components/Button'
+import { ConfirmDialog } from '../components/ConfirmDialog'
+import { ShareDialog } from '../components/ShareDialog'
 
 export default function DetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -19,6 +22,23 @@ export default function DetailPage() {
 function Detail({ initial }: { initial: RecordingDetail }) {
   const [rec, setRec] = useState(initial)
   const [params] = useSearchParams()
+  const navigate = useNavigate()
+  const [sharing, setSharing] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [removing, setRemoving] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+
+  async function remove() {
+    setRemoving(true)
+    setDeleteError('')
+    try {
+      await api.deleteRecording(rec.id)
+      navigate('/', { replace: true })
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : '지우지 못했습니다')
+      setRemoving(false)
+    }
+  }
 
   // 검색 히트에서 넘어온 경우(?t=초) 해당 세그먼트로 스크롤
   const tParam = params.get('t')
@@ -42,7 +62,23 @@ function Detail({ initial }: { initial: RecordingDetail }) {
 
   return (
     <div className="mx-auto max-w-[720px] px-6 py-6">
-      <TitleEditor rec={rec} onSaved={setRec} />
+      <div className="flex items-start justify-between gap-4">
+        <TitleEditor rec={rec} onSaved={setRec} />
+        {rec.can_manage && (
+          <div className="flex shrink-0 gap-2">
+            <Button onClick={() => setSharing(true)}>
+              <Share2 className="size-4" />
+              공유
+              {rec.share_state && rec.share_state.user_count + rec.share_state.link_count > 0
+                ? ` ${rec.share_state.user_count + rec.share_state.link_count}`
+                : ''}
+            </Button>
+            <Button variant="ghost" aria-label="삭제" onClick={() => setDeleting(true)}>
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
+        )}
+      </div>
       <div className="mt-1 flex items-center gap-2 text-sm text-text-secondary">
         <span className="tnum">{formatDate(rec.recorded_at)}</span>
         <span aria-hidden>·</span>
@@ -79,6 +115,28 @@ function Detail({ initial }: { initial: RecordingDetail }) {
           }
         />
       </section>
+
+      {deleteError && <ErrorNote message={deleteError} />}
+
+      <ShareDialog
+        recordingId={rec.id}
+        open={sharing}
+        onClose={() => setSharing(false)}
+        onChanged={() => void api.recording(rec.id).then(setRec)}
+      />
+      <ConfirmDialog
+        open={deleting}
+        title="녹음과 전사를 지웁니다"
+        description={
+          rec.source === 'upload'
+            ? '올린 원본 파일까지 함께 사라집니다. 되돌릴 수 없습니다.'
+            : '목록에서만 사라집니다. 원본 파일은 그대로 남습니다.'
+        }
+        confirmLabel="지우기"
+        busy={removing}
+        onConfirm={() => void remove()}
+        onCancel={() => setDeleting(false)}
+      />
     </div>
   )
 }

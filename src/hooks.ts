@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { ApiError } from './http'
 
 export interface AsyncState<T> {
   data: T | null
   error: string | null
+  /** 서버가 준 상태 코드. 401과 403은 화면이 다르게 다뤄야 한다 */
+  errorStatus: number | null
   loading: boolean
   reload: () => void
 }
@@ -11,6 +14,7 @@ export interface AsyncState<T> {
 export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]): AsyncState<T> {
   const [data, setData] = useState<T | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [errorStatus, setErrorStatus] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
   const [tick, setTick] = useState(0)
   const seq = useRef(0)
@@ -18,6 +22,7 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]): AsyncState<T
   useEffect(() => {
     const current = ++seq.current
     setError(null)
+    setErrorStatus(null)
     const timer = setTimeout(() => {
       if (seq.current === current) setLoading(true)
     }, 200)
@@ -32,6 +37,7 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]): AsyncState<T
         if (seq.current !== current) return
         clearTimeout(timer)
         setError(err.message)
+        setErrorStatus(err instanceof ApiError ? err.status : null)
         setLoading(false)
       },
     )
@@ -41,5 +47,5 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]): AsyncState<T
   }, [...deps, tick])
 
   const reload = useCallback(() => setTick((t) => t + 1), [])
-  return { data, error, loading, reload }
+  return { data, error, errorStatus, loading, reload }
 }
