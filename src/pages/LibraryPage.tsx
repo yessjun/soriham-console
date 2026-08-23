@@ -5,6 +5,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { FolderOpen, Upload, X } from 'lucide-react'
 import { api, type RecordingSummary } from '../api'
 import { useAsync } from '../hooks'
+import { ACTIVE_STATUSES, STATUSES, statusLabel } from '../status'
 import { formatDate, formatDuration } from '../format'
 import {
   EmptyState,
@@ -18,23 +19,22 @@ import { AUDIO_ACCEPT, DropOverlay, UploadList, useUpload } from '../components/
 
 const PAGE_SIZE = 50
 const REFRESH_MS = 5000
-// 이 상태들은 워커가 손대고 있으므로 화면을 주기적으로 새로고침한다
-const ACTIVE_STATUSES = ['pending', 'transcribing', 'diarizing', 'enriching']
 
-const STATUS_FILTERS = ['전체', 'pending', 'transcribing', 'diarizing', 'enriching', 'done', 'error', 'missing', 'duplicate']
+const ALL = '전체'
+const STATUS_FILTERS = [ALL, ...STATUSES]
 
 export default function LibraryPage() {
   const workspaceId = useWorkspaceId()
   // 못 하는 일은 그리지 않는다. 비활성으로 남기면 왜 안 되는지 알 길이 없다
   const canUpload = useCan('upload')
-  const [status, setStatus] = useState('전체')
+  const [status, setStatus] = useState(ALL)
   const [limit, setLimit] = useState(PAGE_SIZE)
   const [params, setParams] = useSearchParams()
   const tag = params.get('tag') ?? undefined
   const tagName = params.get('tagName') ?? undefined
   const uploads = useUpload()
   const query = useAsync(
-    () => api.listRecordings(workspaceId, { status: status === '전체' ? undefined : status, tag, limit }),
+    () => api.listRecordings(workspaceId, { status: status === ALL ? undefined : status, tag, limit }),
     [workspaceId, status, tag, limit, uploads.completed],
   )
   const fileInput = useRef<HTMLInputElement | null>(null)
@@ -130,7 +130,7 @@ export default function LibraryPage() {
                 : 'text-text-secondary hover:bg-surface'
             }`}
           >
-            {s}
+            {s === ALL ? s : statusLabel(s)}
           </button>
         ))}
       </div>
