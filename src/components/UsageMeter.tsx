@@ -21,25 +21,28 @@ export function UsageWarning() {
   const usage = query.data
   if (!usage) return null
 
-  const parts: string[] = []
-  if (usage.quota_minutes) {
-    const ratio = usage.used_minutes / usage.quota_minutes
-    if (ratio >= 0.8) {
-      parts.push(
-        `전사 시간 ${Math.round(usage.used_minutes)}분 / ${usage.quota_minutes}분 (${usage.window_days}일)`,
-      )
-    }
+  // 한도마다 푸는 방법이 다르다. 전사 시간은 녹음을 지워도 줄지 않는다 —
+  // 사용 이력은 삭제를 살아남고, 30일 창에서 빠져나가야 풀린다
+  const lines: string[] = []
+  if (usage.quota_minutes && usage.used_minutes / usage.quota_minutes >= 0.8) {
+    lines.push(
+      `전사 시간 ${Math.round(usage.used_minutes)}분 / ${usage.quota_minutes}분 사용 중입니다.` +
+        ` 최근 ${usage.window_days}일을 세므로 시간이 지나면 풀립니다.`,
+    )
   }
-  if (usage.quota_bytes) {
-    if (usage.used_bytes / usage.quota_bytes >= 0.8) {
-      parts.push(`저장 공간 ${gb(usage.used_bytes)} / ${gb(usage.quota_bytes)}`)
-    }
+  if (usage.quota_bytes && usage.used_bytes / usage.quota_bytes >= 0.8) {
+    lines.push(
+      `저장 공간 ${gb(usage.used_bytes)} / ${gb(usage.quota_bytes)} 사용 중입니다.` +
+        ' 필요 없는 녹음을 지우면 돌아옵니다.',
+    )
   }
-  if (parts.length === 0) return null
+  if (lines.length === 0) return null
 
   return (
-    <p className="mb-3 rounded-[6px] bg-warn/10 px-3 py-2 text-sm text-warn">
-      {parts.join(', ')} 사용 중입니다. 필요 없는 녹음을 지우면 공간이 돌아옵니다.
-    </p>
+    <div className="mb-3 rounded-[6px] bg-warn/10 px-3 py-2 text-sm text-warn">
+      {lines.map((line) => (
+        <p key={line}>{line}</p>
+      ))}
+    </div>
   )
 }

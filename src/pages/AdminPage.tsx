@@ -35,7 +35,12 @@ const EMPTY: Record<string, string> = {
 export default function AdminPage() {
   const { refresh } = useAuth()
   const [tab, setTab] = useState('pending')
-  const [pending, setPending] = useState<{ account: Account; to: string; label: string } | null>(
+  const [pending, setPending] = useState<{
+    account: Account
+    to: string
+    label: string
+    destructive?: boolean
+  } | null>(
     null,
   )
   const [busy, setBusy] = useState(false)
@@ -61,7 +66,7 @@ export default function AdminPage() {
 
   return (
     <div className="px-6 py-6">
-      <h2 className="text-lg font-semibold">계정 관리</h2>
+      <h2 className="text-2xl font-bold tracking-[-0.01em]">계정 관리</h2>
       <div className="mt-4 flex gap-1">
         {TABS.map((t) => (
           <button
@@ -103,7 +108,14 @@ export default function AdminPage() {
                 <Button
                   key={action.to}
                   variant={action.destructive ? 'ghost' : 'primary'}
-                  onClick={() => setPending({ account, to: action.to, label: action.label })}
+                  onClick={() =>
+                    setPending({
+                      account,
+                      to: action.to,
+                      label: action.label,
+                      destructive: action.destructive,
+                    })
+                  }
                 >
                   {action.label}
                 </Button>
@@ -124,6 +136,7 @@ export default function AdminPage() {
               : undefined
         }
         confirmLabel={pending?.label ?? ''}
+        destructive={pending?.destructive ?? false}
         busy={busy}
         onConfirm={() => void apply()}
         onCancel={() => setPending(null)}
