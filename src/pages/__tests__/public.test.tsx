@@ -138,3 +138,23 @@ describe('비밀번호 링크', () => {
     expect(alert.textContent).not.toMatch(/[0-9]회/)
   })
 })
+
+describe('오디오를 막은 링크', () => {
+  it('눌러서 듣는 어포던스를 그리지 않는다', async () => {
+    // 플레이어 바는 트랙이 없으면 원래 안 그려진다. 실제로 막아야 하는 것은 전사의
+    // 재생 버튼이다 — 눌러도 아무 일이 없으면 무엇이 잘못됐는지 알 수 없다
+    vi.spyOn(api, 'sharedRecording').mockResolvedValue(shared({ allow_audio: false }))
+    renderPublic()
+    await screen.findByText('안녕하세요')
+
+    expect(screen.queryByTitle('이 구간부터 재생')).toBeNull()
+  })
+
+  it('허용한 링크에는 그린다', async () => {
+    vi.spyOn(api, 'sharedRecording').mockResolvedValue(shared({ allow_audio: true }))
+    renderPublic()
+    await screen.findByText('안녕하세요')
+
+    expect(screen.getByTitle('이 구간부터 재생')).toBeInTheDocument()
+  })
+})
