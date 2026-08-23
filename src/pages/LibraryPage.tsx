@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useWorkspaceId } from '../workspace'
+import { useCan, useWorkspaceId } from '../workspace'
 import { Link, useSearchParams } from 'react-router-dom'
 import { FolderOpen, Upload, X } from 'lucide-react'
 import { api, type RecordingSummary } from '../api'
@@ -24,6 +24,8 @@ const STATUS_FILTERS = ['전체', 'pending', 'transcribing', 'diarizing', 'enric
 
 export default function LibraryPage() {
   const workspaceId = useWorkspaceId()
+  // 못 하는 일은 그리지 않는다. 비활성으로 남기면 왜 안 되는지 알 길이 없다
+  const canUpload = useCan('upload')
   const [status, setStatus] = useState('전체')
   const [limit, setLimit] = useState(PAGE_SIZE)
   const [params, setParams] = useSearchParams()
@@ -50,10 +52,10 @@ export default function LibraryPage() {
     <div
       className="relative px-6 py-6"
       onDragEnter={(e) => {
-        if (e.dataTransfer.types.includes('Files')) setDragging(true)
+        if (canUpload && e.dataTransfer.types.includes('Files')) setDragging(true)
       }}
       onDragOver={(e) => {
-        if (e.dataTransfer.types.includes('Files')) e.preventDefault()
+        if (canUpload && e.dataTransfer.types.includes('Files')) e.preventDefault()
       }}
       onDragLeave={(e) => {
         // 자식 사이 이동은 무시하고 컨테이너 밖으로 나갈 때만 끈다. 깊이를 세면
@@ -63,7 +65,7 @@ export default function LibraryPage() {
       }}
       onDrop={(e) => {
         setDragging(false)
-        if (!e.dataTransfer.types.includes('Files')) return
+        if (!canUpload || !e.dataTransfer.types.includes('Files')) return
         e.preventDefault()
         uploads.add(e.dataTransfer.files)
       }}
@@ -74,25 +76,29 @@ export default function LibraryPage() {
           {query.data && (
             <span className="tnum text-sm text-text-secondary">{query.data.total}개</span>
           )}
-          <button
-            type="button"
-            onClick={() => fileInput.current?.click()}
-            className="flex h-9 items-center gap-2 rounded-[6px] bg-accent px-3.5 text-sm font-medium text-accent-text-on transition-colors duration-120 hover:bg-accent-hover"
-          >
-            <Upload size={18} strokeWidth={1.75} />
-            업로드
-          </button>
-          <input
-            ref={fileInput}
-            type="file"
-            multiple
-            accept={AUDIO_ACCEPT}
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files) uploads.add(e.target.files)
-              e.target.value = ''
-            }}
-          />
+          {canUpload && (
+            <>
+              <button
+                type="button"
+                onClick={() => fileInput.current?.click()}
+                className="flex h-9 items-center gap-2 rounded-[6px] bg-accent px-3.5 text-sm font-medium text-accent-text-on transition-colors duration-120 hover:bg-accent-hover"
+              >
+                <Upload size={18} strokeWidth={1.75} />
+                업로드
+              </button>
+              <input
+                ref={fileInput}
+                type="file"
+                multiple
+                accept={AUDIO_ACCEPT}
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files) uploads.add(e.target.files)
+                  e.target.value = ''
+                }}
+              />
+            </>
+          )}
         </div>
       </div>
       {tag && (
