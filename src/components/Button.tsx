@@ -6,7 +6,7 @@ const VARIANT: Record<Variant, string> = {
   primary: 'bg-accent text-accent-text-on hover:bg-accent-hover',
   secondary: 'border border-border-strong bg-surface text-text hover:bg-bg',
   ghost: 'text-text-secondary hover:bg-accent-subtle',
-  destructive: 'bg-error text-white hover:brightness-95',
+  destructive: 'bg-error text-error-text-on hover:opacity-90',
 }
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {

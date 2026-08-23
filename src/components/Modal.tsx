@@ -30,7 +30,7 @@ export function Modal({ open, onClose, title, children, footer, width = 480 }: P
     <dialog
       ref={ref}
       aria-label={title}
-      // Escape와 백드롭 클릭이 모두 이 이벤트로 온다
+      // Escape가 이 이벤트로 온다. 백드롭 클릭은 아래 onClick이 받는다
       onCancel={(event) => {
         event.preventDefault()
         onClose()
@@ -39,7 +39,7 @@ export function Modal({ open, onClose, title, children, footer, width = 480 }: P
         // dialog 자신이 대상이면 백드롭을 누른 것이다. 내용은 자식이 받는다
         if (event.target === ref.current) onClose()
       }}
-      className="m-auto rounded-[14px] bg-surface-raised p-6 text-text shadow-3 backdrop:bg-black/40"
+      className="m-auto rounded-[14px] bg-surface-raised p-6 text-text shadow-3 backdrop:bg-[color-mix(in_srgb,var(--text)_40%,transparent)]"
       style={{ width }}
     >
       <h2 className="text-lg font-semibold">{title}</h2>

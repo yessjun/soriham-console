@@ -2,7 +2,33 @@
 
 import { apiUrl, csrfToken, detailMessage, request } from './http'
 
-export { ApiError, apiUrl, setUnauthorizedHandler } from './http'
+export { ApiError, apiUrl, setForbiddenHandler, setUnauthorizedHandler } from './http'
+
+export interface UserOut {
+  id: string
+  email: string
+  name: string
+}
+
+export interface WorkspaceRef {
+  id: string
+  name: string
+  slug: string
+  role: string
+  /** 이 워크스페이스에서 할 수 있는 것. 역할로 화면이 다시 계산하지 않는다 */
+  capabilities: string[]
+}
+
+export interface Me {
+  user: UserOut
+  /** pending | active | rejected | disabled */
+  status: string
+  workspaces: WorkspaceRef[]
+  default_workspace_id: string | null
+  /** 계정 단위 능력. 워크스페이스 안에서 할 수 있는 것은 WorkspaceRef가 가진다 */
+  capabilities: string[]
+  pending_user_count: number | null
+}
 
 export interface Tag {
   id: string
@@ -92,6 +118,21 @@ export class UploadError extends Error {
 }
 
 export const api = {
+  me() {
+    return request<Me>('/api/auth/me')
+  },
+  login(email: string, password: string) {
+    return request<Me>('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    })
+  },
+  signup(body: { email: string; password: string; display_name: string; signup_note?: string }) {
+    return request<Me>('/api/auth/signup', { method: 'POST', body: JSON.stringify(body) })
+  },
+  logout() {
+    return request<void>('/api/auth/logout', { method: 'POST' })
+  },
   listRecordings(
     workspaceId: string,
     params: { q?: string; status?: string; tag?: string; limit?: number; offset?: number } = {},

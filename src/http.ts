@@ -28,8 +28,9 @@ export function detailMessage(detail: unknown, fallback: string): string {
   return fallback
 }
 
-type UnauthorizedHandler = () => void
-let onUnauthorized: UnauthorizedHandler | null = null
+type StatusHandler = () => void
+let onUnauthorized: StatusHandler | null = null
+let onForbidden: StatusHandler | null = null
 
 /**
  * 세션이 끊겼을 때 부를 곳. **401만 부른다.**
@@ -37,8 +38,18 @@ let onUnauthorized: UnauthorizedHandler | null = null
  * 403은 "로그인은 됐는데 이건 못 한다"라서 로그인 화면으로 보내면 무한 반복이 된다.
  * 승인 대기 계정이 워크스페이스를 열 때가 정확히 그 경우다.
  */
-export function setUnauthorizedHandler(handler: UnauthorizedHandler | null): void {
+export function setUnauthorizedHandler(handler: StatusHandler | null): void {
   onUnauthorized = handler
+}
+
+/**
+ * 403을 받았을 때 부를 곳. **로그인 화면으로 보내라는 뜻이 아니다.**
+ *
+ * 계정이 중간에 중지되면 세션은 살아 있고 호출만 403이 된다. 화면이 든 상태는 아직
+ * 활성이라 그대로 남는다. 여기서 다시 물어야 대기 화면으로 넘어간다.
+ */
+export function setForbiddenHandler(handler: StatusHandler | null): void {
+  onForbidden = handler
 }
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
@@ -81,6 +92,7 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
       // 본문 없는 오류는 상태 코드 메시지 유지
     }
     if (resp.status === 401) onUnauthorized?.()
+    if (resp.status === 403) onForbidden?.()
     throw new ApiError(message, resp.status, detail)
   }
 

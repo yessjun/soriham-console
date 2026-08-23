@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import { Link } from 'react-router-dom'
-import { currentWorkspaceId } from '../workspace'
+import { useWorkspaceId } from '../workspace'
 import { api, UploadError } from '../api'
 
 /** 서버가 받는 확장자 (api의 AUDIO_EXTENSIONS와 같은 목록) */
@@ -65,11 +65,14 @@ export function useUpload(): UploadState {
  * 화면 전환에도 진행과 실패가 살아남게 앱 셸에 둔다.
  */
 export function UploadProvider({ children }: { children: ReactNode }) {
+  const workspaceId = useWorkspaceId()
   const [items, setItems] = useState<UploadItem[]>([])
   const [completed, setCompleted] = useState(0)
   const seq = useRef(0)
   const running = useRef(false)
-  const queue = useRef<{ id: number; file: File }[]>([])
+  // 어느 워크스페이스로 올릴지를 항목에 박아 둔다. 큐를 도는 중에 사용자가 전환하면
+  // 남은 파일이 남의 워크스페이스로 올라간다
+  const queue = useRef<{ id: number; file: File; workspaceId: string }[]>([])
 
   // 드롭존 밖에 놓았을 때 브라우저가 파일을 열어 앱이 통째로 날아가는 것을 막는다
   useEffect(() => {
@@ -90,9 +93,9 @@ export function UploadProvider({ children }: { children: ReactNode }) {
     try {
       let next = queue.current.shift()
       while (next) {
-        const { id, file } = next
+        const { id, file, workspaceId } = next
         try {
-          const { promise } = api.uploadRecording(currentWorkspaceId(), file, (ratio) =>
+          const { promise } = api.uploadRecording(workspaceId, file, (ratio) =>
             setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ratio } : it))),
           )
           await promise
@@ -118,7 +121,9 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       const all = Array.from(files)
       if (all.length === 0) return
       const rejected = all.filter((f) => !isAudio(f))
-      const accepted = all.filter(isAudio).map((file) => ({ id: ++seq.current, file }))
+      const accepted = all
+        .filter(isAudio)
+        .map((file) => ({ id: ++seq.current, file, workspaceId }))
       setItems((prev) => [
         ...prev,
         ...accepted.map(({ id, file }) => ({ id, name: file.name, ratio: 0 })),
@@ -134,7 +139,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         void drain()
       }
     },
-    [drain],
+    [drain, workspaceId],
   )
 
   const dismiss = useCallback((id: number) => {

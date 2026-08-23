@@ -16,6 +16,8 @@
   --accent-hover: #92400e;
   --accent-subtle: #fef3e2;
   --accent-text-on: #ffffff;
+  /* 시맨틱 상태색을 배경으로 쓸 때 그 위에 얹는 글자색 */
+  --error-text-on: #ffffff;
 
   --ok: #15803d;
   --warn: #a16207;
@@ -53,6 +55,7 @@
   --accent-hover: #fbbf24;
   --accent-subtle: #3a2e1a;
   --accent-text-on: #1c1207;
+  --error-text-on: #1c1207;
 
   --ok: #4ade80;
   --warn: #facc15;
@@ -90,6 +93,7 @@
     --accent-hover: #fbbf24;
     --accent-subtle: #3a2e1a;
     --accent-text-on: #1c1207;
+  --error-text-on: #1c1207;
 
     --ok: #4ade80;
     --warn: #facc15;
@@ -125,6 +129,7 @@
   --color-accent-hover: var(--accent-hover);
   --color-accent-subtle: var(--accent-subtle);
   --color-accent-text-on: var(--accent-text-on);
+  --color-error-text-on: var(--error-text-on);
   --color-ok: var(--ok);
   --color-warn: var(--warn);
   --color-error: var(--error);
