@@ -17,11 +17,14 @@ export default function PublicRecordingPage() {
   const [unlocked, setUnlocked] = useState(0)
   const query = useAsync<SharedRecording | null>(() => api.sharedRecording(token), [token, unlocked])
 
-  if (query.loading) return <PublicLayout><ListSkeleton /></PublicLayout>
-
   // 비밀번호가 걸린 링크는 잠금 해제 전에 상세도 주지 않는다
   if (query.error && (query.errorStatus === 401 || query.error.includes('비밀번호'))) {
     return <UnlockForm token={token} onUnlocked={() => setUnlocked((n) => n + 1)} />
+  }
+  // 첫 200ms는 loading이 false라 여기서 걸러내지 않으면 "링크가 유효하지 않습니다"가
+  // 잠깐 스쳤다가 본문으로 바뀐다
+  if (!query.data && !query.error) {
+    return <PublicLayout>{query.loading ? <ListSkeleton /> : null}</PublicLayout>
   }
   if (query.error || !query.data) {
     return (

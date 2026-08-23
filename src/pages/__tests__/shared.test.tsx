@@ -8,7 +8,8 @@ import { UploadProvider } from '../../components/Uploader'
 import { PlayerProvider } from '../../player'
 import SharedPage from '../SharedPage'
 import LibraryPage from '../LibraryPage'
-import { api, type Me, type SharedWithMe } from '../../api'
+import DetailPage from '../DetailPage'
+import { api, type Me, type RecordingDetail, type SharedWithMe } from '../../api'
 
 function makeMe(capabilities: string[] = ['upload']): Me {
   return {
@@ -112,5 +113,43 @@ describe('업로드 어포던스', () => {
 
     await screen.findByRole('heading', { name: '라이브러리' })
     expect(screen.queryByRole('button', { name: /업로드/ })).toBeNull()
+  })
+})
+
+function detail(overrides: Partial<RecordingDetail> = {}): RecordingDetail {
+  return {
+    ...shared(),
+    can_edit: false,
+    can_manage: false,
+    share_state: null,
+    error: null,
+    stt_meta: null,
+    speaker_names: {},
+    segments: [],
+    tags: [{ id: 't1', name: '회의' }],
+    ...overrides,
+  }
+}
+
+describe('공유받은 녹음의 편집 어포던스', () => {
+  it('열람 전용이면 제목과 태그 편집을 그리지 않는다', async () => {
+    vi.spyOn(api, 'me').mockResolvedValue(makeMe())
+    vi.spyOn(api, 'recording').mockResolvedValue(detail())
+    renderAt('/recordings/r1', <DetailPage />)
+
+    expect(await screen.findByText('친구 회의')).toBeInTheDocument()
+    expect(screen.getByText('회의')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '제목 수정' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /태그 회의 제거/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: '태그' })).toBeNull()
+  })
+
+  it('편집 권한이 있으면 그린다', async () => {
+    vi.spyOn(api, 'me').mockResolvedValue(makeMe())
+    vi.spyOn(api, 'recording').mockResolvedValue(detail({ can_edit: true }))
+    renderAt('/recordings/r1', <DetailPage />)
+
+    expect(await screen.findByRole('button', { name: '제목 수정' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /태그 회의 제거/ })).toBeInTheDocument()
   })
 })
