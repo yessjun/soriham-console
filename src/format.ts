@@ -28,3 +28,17 @@ export function formatEta(sec: number | null | undefined): string {
   const m = totalMin % 60
   return h > 0 ? `${h}시간 ${m}분` : `${m}분`
 }
+
+
+/**
+ * 받침에 따라 갈리는 조사를 붙인다.
+ *
+ * `${name}가 공유`처럼 한쪽으로 박아두면 "김민준가 공유"가 된다. 한글이 아닌 글자로
+ * 끝나면(영문 이름, 이메일) 받침 없는 쪽을 쓴다.
+ */
+export function withJosa(word: string, withBatchim: string, withoutBatchim: string): string {
+  const last = word.trim().slice(-1)
+  const code = last.charCodeAt(0)
+  if (Number.isNaN(code) || code < 0xac00 || code > 0xd7a3) return `${word}${withoutBatchim}`
+  return `${word}${(code - 0xac00) % 28 === 0 ? withoutBatchim : withBatchim}`
+}

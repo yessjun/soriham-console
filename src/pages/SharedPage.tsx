@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { Share2 } from 'lucide-react'
 import { api } from '../api'
 import { EmptyState, ErrorNote, ListSkeleton, StatusBadge, TagChip } from '../components/ui'
-import { formatDate, formatDuration } from '../format'
+import { formatDate, formatDuration, withJosa } from '../format'
 import { useAsync } from '../hooks'
 
 /**
@@ -16,7 +16,7 @@ export default function SharedPage() {
 
   return (
     <div className="px-6 py-6">
-      <h2 className="text-lg font-semibold">나에게 공유됨</h2>
+      <h2 className="text-2xl font-bold tracking-[-0.01em]">나에게 공유됨</h2>
       {query.error && <ErrorNote message={query.error} />}
       {query.loading && <ListSkeleton />}
       {query.data?.total === 0 && (
@@ -35,7 +35,7 @@ export default function SharedPage() {
                 <span className="tnum">{formatDuration(item.duration_sec)}</span>
                 <StatusBadge status={item.status} progress={item.progress} />
                 <span>
-                  {item.shared_by ? `${item.shared_by}가 공유` : '공유받음'}
+                  {item.shared_by ? `${withJosa(item.shared_by, '이', '가')} 공유` : '공유받음'}
                   {item.permission === 'edit' ? ' (편집 가능)' : ''}
                 </span>
                 {item.tags.map((tag) => (

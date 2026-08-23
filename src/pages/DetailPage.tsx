@@ -6,9 +6,12 @@ import { useAsync } from '../hooks'
 import { formatDate, formatDuration } from '../format'
 import { ErrorNote, ListSkeleton, ProgressLine, StatusBadge, TagChip } from '../components/ui'
 import { Transcript } from '../components/Transcript'
+import { ACTIVE_STATUSES } from '../status'
 import { Button } from '../components/Button'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { ShareDialog } from '../components/ShareDialog'
+
+const REFRESH_MS = 5000
 
 export default function DetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -57,6 +60,15 @@ function Detail({ initial }: { initial: RecordingDetail }) {
       .getElementById(`seg-${focusIdx}`)
       ?.scrollIntoView({ block: 'center' })
   }, [focusIdx])
+
+  // 워커가 붙어 있는 동안은 상세도 다시 받는다. 목록만 갱신하면 상세를 열어둔 사람은
+  // 전사가 끝나도 화면이 그대로다
+  const active = ACTIVE_STATUSES.includes(rec.status)
+  useEffect(() => {
+    if (!active) return
+    const timer = setInterval(() => void api.recording(rec.id).then(setRec), REFRESH_MS)
+    return () => clearInterval(timer)
+  }, [active, rec.id])
 
   const track = { recordingId: rec.id, title: rec.title ?? rec.filename }
 
@@ -116,8 +128,6 @@ function Detail({ initial }: { initial: RecordingDetail }) {
         />
       </section>
 
-      {deleteError && <ErrorNote message={deleteError} />}
-
       <ShareDialog
         recordingId={rec.id}
         open={sharing}
@@ -134,8 +144,12 @@ function Detail({ initial }: { initial: RecordingDetail }) {
         }
         confirmLabel="지우기"
         busy={removing}
+        error={deleteError}
         onConfirm={() => void remove()}
-        onCancel={() => setDeleting(false)}
+        onCancel={() => {
+          setDeleting(false)
+          setDeleteError('')
+        }}
       />
     </div>
   )

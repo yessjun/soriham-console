@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from '../../auth/AuthProvider'
 import { WorkspaceProvider } from '../../auth/WorkspaceProvider'
@@ -151,5 +152,57 @@ describe('공유받은 녹음의 편집 어포던스', () => {
 
     expect(await screen.findByRole('button', { name: '제목 수정' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /태그 회의 제거/ })).toBeInTheDocument()
+  })
+})
+
+describe('상세 화면의 갱신과 실패 문구', () => {
+  it('워커가 붙어 있는 동안 다시 받는다', async () => {
+    vi.useFakeTimers()
+    try {
+      vi.spyOn(api, 'me').mockResolvedValue(makeMe())
+      const recording = vi
+        .spyOn(api, 'recording')
+        .mockResolvedValue(detail({ status: 'transcribing', title: '변환 중' }))
+      renderAt('/recordings/r1', <DetailPage />)
+
+      await vi.waitFor(() => expect(screen.getByText('변환 중')).toBeInTheDocument())
+      const before = recording.mock.calls.length
+      await vi.advanceTimersByTimeAsync(5000)
+      expect(recording.mock.calls.length).toBeGreaterThan(before)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('끝난 녹음은 다시 받지 않는다', async () => {
+    vi.useFakeTimers()
+    try {
+      vi.spyOn(api, 'me').mockResolvedValue(makeMe())
+      const recording = vi.spyOn(api, 'recording').mockResolvedValue(detail({ status: 'done' }))
+      renderAt('/recordings/r1', <DetailPage />)
+
+      await vi.waitFor(() => expect(screen.getByText('친구 회의')).toBeInTheDocument())
+      const before = recording.mock.calls.length
+      await vi.advanceTimersByTimeAsync(20000)
+      expect(recording.mock.calls.length).toBe(before)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('지우지 못하면 그 문구를 다이얼로그 안에 그린다', async () => {
+    // 뒤 화면에 그리면 모달에 가려 아무 일도 안 일어난 것처럼 보인다
+    vi.spyOn(api, 'me').mockResolvedValue(makeMe())
+    vi.spyOn(api, 'recording').mockResolvedValue(detail({ can_manage: true }))
+    vi.spyOn(api, 'deleteRecording').mockRejectedValue(new Error('지울 권한이 없습니다'))
+    const user = userEvent.setup()
+    renderAt('/recordings/r1', <DetailPage />)
+
+    await user.click(await screen.findByRole('button', { name: '삭제' }))
+    await user.click(await screen.findByRole('button', { name: '지우기' }))
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('지울 권한이 없습니다')
+    expect(screen.getByRole('dialog')).toContainElement(alert)
   })
 })
