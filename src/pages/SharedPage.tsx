@@ -29,7 +29,7 @@ export default function SharedPage() {
               to={`/recordings/${item.id}`}
               className="flex min-h-14 flex-col justify-center gap-1 px-4 py-3 hover:bg-bg"
             >
-              <span className="text-lg text-text">{item.title ?? item.filename}</span>
+              <span className="text-lg font-semibold text-text">{item.title ?? item.filename}</span>
               <span className="flex flex-wrap items-center gap-2 text-sm text-text-secondary">
                 <span className="tnum">{formatDate(item.recorded_at)}</span>
                 <span className="tnum">{formatDuration(item.duration_sec)}</span>

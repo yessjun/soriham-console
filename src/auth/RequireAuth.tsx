@@ -10,7 +10,14 @@ import { useAuth } from './context'
  * 확인이 끝나기 전에는 로그인 화면으로도 보내지 않는다. 세션이 살아 있는데 로그인
  * 화면이 한 번 스쳤다 사라지면 고장으로 읽힌다. 껍데기를 먼저 그리고 내용만 비워 둔다.
  */
-export function RequireAuth({ children }: { children: ReactNode }) {
+export function RequireAuth({
+  children,
+  capability,
+}: {
+  children: ReactNode
+  /** 이 능력이 없으면 주소를 직접 쳐도 화면 자체를 그리지 않는다 */
+  capability?: string
+}) {
   const { state } = useAuth()
   const location = useLocation()
 
@@ -31,6 +38,10 @@ export function RequireAuth({ children }: { children: ReactNode }) {
   }
   if (state.me.status !== 'active') {
     return <Navigate to="/pending" replace />
+  }
+  // 데이터는 서버가 막지만, 못 쓰는 화면을 그려 놓고 누르게 하지는 않는다
+  if (capability && !state.me.capabilities.includes(capability)) {
+    return <Navigate to="/" replace />
   }
   return <AppShell>{children}</AppShell>
 }

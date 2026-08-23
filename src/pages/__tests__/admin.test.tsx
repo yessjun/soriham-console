@@ -83,7 +83,8 @@ describe('계정 관리', () => {
     await userEvent.click(screen.getByRole('button', { name: '승인' }))
     expect(change).not.toHaveBeenCalled()
 
-    await userEvent.click(screen.getAllByRole('button', { name: '승인' })[1])
+    // 실행 버튼 문구는 동사다. 목록 버튼과 이름이 갈려야 어느 쪽을 눌렀는지도 분명하다
+    await userEvent.click(await screen.findByRole('button', { name: '승인하기' }))
 
     await waitFor(() => expect(change).toHaveBeenCalledWith('a1', 'active'))
   })
@@ -141,7 +142,7 @@ describe('계정 관리', () => {
     const before = me.mock.calls.length
 
     await userEvent.click(screen.getByRole('button', { name: '승인' }))
-    await userEvent.click(screen.getAllByRole('button', { name: '승인' })[1])
+    await userEvent.click(await screen.findByRole('button', { name: '승인하기' }))
 
     await waitFor(() => expect(me.mock.calls.length).toBeGreaterThan(before))
   })

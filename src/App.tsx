@@ -81,7 +81,7 @@ export default function App() {
             <Route
               path="/settings/admin"
               element={
-                <RequireAuth>
+                <RequireAuth capability="admin">
                   <AdminPage />
                 </RequireAuth>
               }

@@ -66,7 +66,8 @@ function Detail({ initial }: { initial: RecordingDetail }) {
   const active = ACTIVE_STATUSES.includes(rec.status)
   useEffect(() => {
     if (!active) return
-    const timer = setInterval(() => void api.recording(rec.id).then(setRec), REFRESH_MS)
+    // 서버가 잠깐 죽어도 5초마다 처리되지 않은 거절이 쌓이지 않게 한다
+    const timer = setInterval(() => void api.recording(rec.id).then(setRec, () => {}), REFRESH_MS)
     return () => clearInterval(timer)
   }, [active, rec.id])
 
@@ -132,7 +133,7 @@ function Detail({ initial }: { initial: RecordingDetail }) {
         recordingId={rec.id}
         open={sharing}
         onClose={() => setSharing(false)}
-        onChanged={() => void api.recording(rec.id).then(setRec)}
+        onChanged={() => void api.recording(rec.id).then(setRec, () => {})}
       />
       <ConfirmDialog
         open={deleting}
@@ -279,6 +280,7 @@ function TagEditor({
         {adding ? (
           <input
             autoFocus
+            aria-label="태그 이름"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => {

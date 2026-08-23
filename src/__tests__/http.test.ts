@@ -167,3 +167,26 @@ describe('요청 구성', () => {
     expect(lastCall()[0]).toBe('/api/x')
   })
 })
+
+describe('공유 링크의 401', () => {
+  it('세션이 끊긴 것으로 다루지 않는다', async () => {
+    // 비밀번호가 걸린 링크는 잠금 해제 전에 401을 준다. 그것을 세션 만료로 보면
+    // 로그인한 사람이 남의 링크를 여는 것만으로 앱이 익명 상태로 뒤집힌다
+    const seen: string[] = []
+    setUnauthorizedHandler(() => seen.push('세션 끊김'))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ detail: '비밀번호가 필요합니다' }), { status: 401 }),
+      ),
+    )
+
+    await expect(request('/api/shared/tok')).rejects.toThrow()
+    expect(seen).toEqual([])
+
+    await expect(request('/api/auth/me')).rejects.toThrow()
+    expect(seen).toEqual(['세션 끊김'])
+
+    setUnauthorizedHandler(null)
+  })
+})

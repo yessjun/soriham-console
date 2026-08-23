@@ -91,7 +91,7 @@ export function Menu({ trigger, items, label }: Props) {
           id={idBase.current}
           role="menu"
           aria-label={label}
-          className="absolute right-0 top-[calc(100%+4px)] z-10 min-w-40 rounded-[10px] border border-border bg-surface-raised py-1 shadow-2"
+          className="absolute right-0 top-[calc(100%+4px)] z-10 min-w-40 rounded-[10px] border border-border bg-surface-raised py-1 shadow-[var(--shadow-2)]"
         >
           {items.map((item, i) => (
             <button

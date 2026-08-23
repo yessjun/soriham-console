@@ -51,7 +51,11 @@ export function EmptyState({
 }
 
 export function ErrorNote({ message }: { message: string }) {
-  return <p className="py-4 text-sm text-error">{message}</p>
+  return (
+    <p role="alert" className="py-4 text-sm text-error">
+      {message}
+    </p>
+  )
 }
 
 export function ListSkeleton({ rows = 6 }: { rows?: number }) {
