@@ -158,3 +158,23 @@ describe('오디오를 막은 링크', () => {
     expect(screen.getByTitle('이 구간부터 재생')).toBeInTheDocument()
   })
 })
+
+describe('첫 화면', () => {
+  it('응답을 기다리는 동안 링크가 깨졌다고 말하지 않는다', async () => {
+    // useAsync는 첫 200ms 동안 loading이 false다. 그 사이를 걸러내지 않으면
+    // 오류 화면이 한 번 스쳤다가 본문으로 바뀐다
+    let settle: (value: SharedRecording) => void = () => {}
+    vi.spyOn(api, 'sharedRecording').mockReturnValue(
+      new Promise<SharedRecording>((resolve) => {
+        settle = resolve
+      }),
+    )
+    renderPublic()
+
+    expect(screen.queryByText('링크가 유효하지 않습니다')).not.toBeInTheDocument()
+
+    settle(shared())
+    expect(await screen.findByText('8월 회의')).toBeInTheDocument()
+    expect(screen.queryByText('링크가 유효하지 않습니다')).not.toBeInTheDocument()
+  })
+})

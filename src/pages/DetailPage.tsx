@@ -167,14 +167,16 @@ function TitleEditor({
     return (
       <div className="group flex items-center gap-2">
         <h2 className="text-xl font-[650]">{rec.title ?? rec.filename}</h2>
-        <button
-          type="button"
-          aria-label="제목 수정"
-          onClick={() => setEditing(true)}
-          className="rounded-[6px] p-1 text-text-tertiary opacity-0 transition-opacity duration-120 group-hover:opacity-100 hover:bg-bg focus-visible:opacity-100"
-        >
-          <Pencil size={18} strokeWidth={1.75} />
-        </button>
+        {rec.can_edit && (
+          <button
+            type="button"
+            aria-label="제목 수정"
+            onClick={() => setEditing(true)}
+            className="rounded-[6px] p-1 text-text-tertiary opacity-0 transition-opacity duration-120 group-hover:opacity-100 hover:bg-bg focus-visible:opacity-100"
+          >
+            <Pencil size={18} strokeWidth={1.75} />
+          </button>
+        )}
       </div>
     )
   }
@@ -229,6 +231,19 @@ function TagEditor({
     } catch (e) {
       setError((e as Error).message)
     }
+  }
+
+  // 편집 권한이 없으면 붙이고 떼는 컨트롤을 아예 그리지 않는다. 비활성으로 남기면
+  // 왜 안 되는지 알 길이 없고, 열람 전용인데 편집 어포던스만 보인다
+  if (!rec.can_edit) {
+    if (rec.tags.length === 0) return null
+    return (
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        {rec.tags.map((t) => (
+          <TagChip key={t.id} name={t.name} />
+        ))}
+      </div>
+    )
   }
 
   return (
