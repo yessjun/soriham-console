@@ -25,15 +25,16 @@ export default function SignupPage() {
     setBusy(true)
     setError('')
     try {
-      const me = await api.signup({
-        email: form.email,
-        password: form.password,
-        display_name: form.display_name,
-        signup_note: form.signup_note || undefined,
-      })
-      adopt(me)
-      // 가입은 되지만 바로 쓰지는 못한다. 왜 못 쓰는지를 보여주는 화면으로 보낸다
-      navigate(me.status === 'active' ? '/' : '/pending', { replace: true })
+      adopt(
+        await api.signup({
+          email: form.email,
+          password: form.password,
+          display_name: form.display_name,
+          signup_note: form.signup_note || undefined,
+        }),
+      )
+      // 가입은 되지만 바로 쓰지는 못한다. 어느 화면으로 갈지는 RequireAuth가 정한다
+      navigate('/', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : '가입 신청에 실패했습니다')
       setBusy(false)

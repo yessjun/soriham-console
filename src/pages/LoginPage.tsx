@@ -22,10 +22,11 @@ export default function LoginPage() {
     setBusy(true)
     setError('')
     try {
-      const me = await api.login(email, password)
-      adopt(me)
+      adopt(await api.login(email, password))
+      // 대기 계정을 어디로 보낼지는 RequireAuth가 정한다. 여기서 한 번 더 판단하면
+      // 같은 규칙이 두 곳에 생긴다
       const from = (location.state as { from?: string } | null)?.from
-      navigate(me.status === 'active' ? (from ?? '/') : '/pending', { replace: true })
+      navigate(from ?? '/', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : '로그인에 실패했습니다')
       setBusy(false)
