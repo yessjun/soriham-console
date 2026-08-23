@@ -1,6 +1,16 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { ChartColumn, Library, Monitor, Moon, Search, Sun, Tags, UserCheck } from 'lucide-react'
+import {
+  ChartColumn,
+  Library,
+  Monitor,
+  Moon,
+  Search,
+  Share2,
+  Sun,
+  Tags,
+  UserCheck,
+} from 'lucide-react'
 import { Avatar } from '../components/Avatar'
 import { Menu } from '../components/Menu'
 import { PlayerBar } from '../player'
@@ -10,6 +20,7 @@ import { useWorkspace } from '../workspace'
 
 const NAV = [
   { to: '/', label: '라이브러리', icon: Library },
+  { to: '/shared', label: '나에게 공유됨', icon: Share2 },
   { to: '/search', label: '검색', icon: Search },
   { to: '/tags', label: '태그', icon: Tags },
   { to: '/dashboard', label: '대시보드', icon: ChartColumn },

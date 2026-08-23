@@ -64,6 +64,16 @@ export interface RecordingSummary {
   eta_sec: number | null
 }
 
+export interface SharedWithMe extends RecordingSummary {
+  permission: string
+  shared_by: string | null
+}
+
+export interface SharedWithMeList {
+  items: SharedWithMe[]
+  total: number
+}
+
 export interface RecordingList {
   items: RecordingSummary[]
   total: number
@@ -162,6 +172,9 @@ export const api = {
     }
     const suffix = qs.size ? `?${qs}` : ''
     return request<RecordingList>(`/api/workspaces/${workspaceId}/recordings${suffix}`)
+  },
+  sharedWithMe() {
+    return request<SharedWithMeList>('/api/shared-with-me')
   },
   recording(id: string) {
     return request<RecordingDetail>(`/api/recordings/${id}`)
