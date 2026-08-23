@@ -1,43 +1,23 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Pause, Play, RotateCcw, RotateCw } from 'lucide-react'
 import { api } from './api'
+import {
+  PlayerControlsContext,
+  PlayerPlayingContext,
+  PlayerTimeContext,
+  usePlayerControls,
+  usePlayerPlaying,
+  usePlayerTime,
+  type PlayerTrack,
+} from './player-context'
 import { formatDuration } from './format'
 
-export interface PlayerTrack {
-  recordingId: string
-  title: string
-  subtitle?: string
-}
-
-interface PlayerState {
-  track: PlayerTrack | null
-  playing: boolean
-  currentTime: number
-  duration: number
-  rate: number
-  /** 트랙을 (필요 시 교체하고) 지정 위치부터 재생 */
-  play: (track: PlayerTrack, atSec?: number) => void
-  seek: (sec: number) => void
-  toggle: () => void
-  setRate: (rate: number) => void
-}
-
-const PlayerContext = createContext<PlayerState | null>(null)
-
-export function usePlayer(): PlayerState {
-  const ctx = useContext(PlayerContext)
-  if (!ctx) throw new Error('PlayerProvider 밖에서 usePlayer를 호출함')
-  return ctx
-}
+export type { PlayerTrack } from './player-context'
+export {
+  usePlayerControls,
+  usePlayerPlaying,
+  usePlayerTime,
+} from './player-context'
 
 const RATES = [1, 1.25, 1.5, 2]
 
@@ -71,7 +51,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       // src 교체는 상태 업데이터 밖에서(부수효과 시점 보장) ref로 판별한다
       if (trackIdRef.current !== next.recordingId) {
         trackIdRef.current = next.recordingId
-        el.src = api.audioUrl(next.recordingId)
+        el.src = next.src ?? api.audioUrl(next.recordingId)
         // 새 소스 로드가 재생 위치·시간을 리셋하므로 화면 상태도 즉시 리셋
         setCurrentTime(atSec ?? 0)
         setDuration(0)
@@ -111,11 +91,21 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => () => audioRef.current?.pause(), [])
 
-  const value = useMemo(
-    () => ({ track, playing, currentTime, duration, rate, play, seek, toggle, setRate }),
-    [track, playing, currentTime, duration, rate, play, seek, toggle, setRate],
+  // 세 갈래로 나눈다. 한 덩어리로 두면 재생 시간이 바뀔 때마다 재생 시간을 안 보는
+  // 컴포넌트까지 전부 다시 그린다. 전사 뷰가 초당 네 번 통째로 다시 그려지던 자리다
+  const controls = useMemo(
+    () => ({ track, rate, play, seek, toggle, setRate }),
+    [track, rate, play, seek, toggle, setRate],
   )
-  return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>
+  const time = useMemo(() => ({ currentTime, duration }), [currentTime, duration])
+
+  return (
+    <PlayerControlsContext value={controls}>
+      <PlayerTimeContext value={time}>
+        <PlayerPlayingContext value={playing}>{children}</PlayerPlayingContext>
+      </PlayerTimeContext>
+    </PlayerControlsContext>
+  )
 }
 
 function IconButton({
@@ -147,7 +137,9 @@ function IconButton({
 }
 
 export function PlayerBar() {
-  const { track, playing, currentTime, duration, rate, seek, toggle, setRate } = usePlayer()
+  const { track, rate, seek, toggle, setRate } = usePlayerControls()
+  const { currentTime, duration } = usePlayerTime()
+  const playing = usePlayerPlaying()
   const barRef = useRef<HTMLDivElement | null>(null)
   const [hovering, setHovering] = useState(false)
 
