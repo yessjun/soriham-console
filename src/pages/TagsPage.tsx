@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom'
+import { currentWorkspaceId } from '../workspace'
 import { Tags } from 'lucide-react'
 import { api } from '../api'
 import { useAsync } from '../hooks'
 import { EmptyState, ErrorNote } from '../components/ui'
 
 export default function TagsPage() {
-  const query = useAsync(() => api.tags(), [])
+  const query = useAsync(() => api.tags(currentWorkspaceId()), [])
 
   return (
     <div className="px-6 py-6">

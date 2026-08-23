@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { currentWorkspaceId } from '../workspace'
 import { Link } from 'react-router-dom'
 import { Search, SearchX } from 'lucide-react'
 import { api, type SearchHit } from '../api'
@@ -20,7 +21,7 @@ export default function SearchPage() {
   useEffect(() => inputRef.current?.focus(), [])
 
   const result = useAsync(
-    () => (query ? api.search(query) : Promise.resolve({ hits: [] as SearchHit[] })),
+    () => (query ? api.search(currentWorkspaceId(), query) : Promise.resolve({ hits: [] as SearchHit[] })),
     [query],
   )
 

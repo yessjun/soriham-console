@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { currentWorkspaceId } from '../workspace'
 import { Link } from 'react-router-dom'
 import { Activity } from 'lucide-react'
 import { api } from '../api'
@@ -21,7 +22,7 @@ const STATUS_ORDER = [
 ]
 
 export default function DashboardPage() {
-  const query = useAsync(() => api.stats(), [])
+  const query = useAsync(() => api.stats(currentWorkspaceId()), [])
 
   useEffect(() => {
     const timer = setInterval(query.reload, REFRESH_MS)

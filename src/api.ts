@@ -1,4 +1,8 @@
-// REST API 클라이언트. 개발은 vite proxy(/api → api 서버), 배포는 동일 오리진 전제.
+// REST API 클라이언트. 호출 공통 층은 http.ts에 있다.
+
+import { apiUrl, csrfToken, detailMessage, request } from './http'
+
+export { ApiError, apiUrl, setUnauthorizedHandler } from './http'
 
 export interface Tag {
   id: string
@@ -12,6 +16,9 @@ export interface RecordingSummary {
   summary: string | null
   recorded_at: string | null
   duration_sec: number | null
+  /** upload | scan — 삭제 확인 문구가 갈린다 */
+  source: string
+  size_bytes: number
   status: string
   language: string | null
   tags: Tag[]
@@ -36,7 +43,16 @@ export interface Segment {
   kind: string
 }
 
+export interface ShareState {
+  user_count: number
+  link_count: number
+}
+
 export interface RecordingDetail extends RecordingSummary {
+  can_edit: boolean
+  can_manage: boolean
+  /** 공유를 관리할 권한이 없으면 비어 있다 */
+  share_state: ShareState | null
   error: string | null
   stt_meta: Record<string, unknown> | null
   speaker_names: Record<string, string>
@@ -62,17 +78,7 @@ export interface Stats {
   recent_errors: RecordingSummary[]
 }
 
-/** 서버가 돌려준 detail을 사람이 읽을 문자열로 (409는 객체로 온다) */
-function detailMessage(detail: unknown, fallback: string): string {
-  if (typeof detail === 'string') return detail
-  if (detail && typeof detail === 'object' && 'message' in detail) {
-    const message = (detail as { message: unknown }).message
-    if (typeof message === 'string') return message
-  }
-  return fallback
-}
-
-/** 업로드 실패 — 중복이면 기존 녹음 id가 실린다 */
+/** 업로드 실패. 중복이면 기존 녹음 id가 실린다 */
 export class UploadError extends Error {
   status: number
   recordingId?: string
@@ -85,32 +91,17 @@ export class UploadError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const resp = await fetch(path, {
-    headers: init?.body ? { 'content-type': 'application/json' } : undefined,
-    ...init,
-  })
-  if (!resp.ok) {
-    let detail = `요청 실패 (${resp.status})`
-    try {
-      const body = await resp.json()
-      detail = detailMessage(body.detail, detail)
-    } catch {
-      // 본문 없는 오류는 상태 코드 메시지 유지
-    }
-    throw new Error(detail)
-  }
-  return resp.json() as Promise<T>
-}
-
 export const api = {
-  listRecordings(params: { q?: string; status?: string; tag?: string; limit?: number; offset?: number } = {}) {
+  listRecordings(
+    workspaceId: string,
+    params: { q?: string; status?: string; tag?: string; limit?: number; offset?: number } = {},
+  ) {
     const qs = new URLSearchParams()
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== '') qs.set(key, String(value))
     }
     const suffix = qs.size ? `?${qs}` : ''
-    return request<RecordingList>(`/api/recordings${suffix}`)
+    return request<RecordingList>(`/api/workspaces/${workspaceId}/recordings${suffix}`)
   },
   recording(id: string) {
     return request<RecordingDetail>(`/api/recordings/${id}`)
@@ -136,20 +127,22 @@ export const api = {
   removeTag(id: string, tagId: string) {
     return request<Tag[]>(`/api/recordings/${id}/tags/${tagId}`, { method: 'DELETE' })
   },
-  tags() {
-    return request<Tag[]>('/api/tags')
+  tags(workspaceId: string) {
+    return request<Tag[]>(`/api/workspaces/${workspaceId}/tags`)
   },
-  search(q: string) {
-    return request<{ hits: SearchHit[] }>(`/api/search?${new URLSearchParams({ q })}`)
+  search(workspaceId: string, q: string) {
+    const qs = new URLSearchParams({ q })
+    return request<{ hits: SearchHit[] }>(`/api/workspaces/${workspaceId}/search?${qs}`)
   },
-  stats() {
-    return request<Stats>('/api/stats')
+  stats(workspaceId: string) {
+    return request<Stats>(`/api/workspaces/${workspaceId}/stats`)
   },
   /**
    * 오디오 업로드. fetch는 업로드 진행률을 주지 못해 XHR을 쓴다.
    * 취소하려면 돌려받은 abort()를 호출한다.
    */
   uploadRecording(
+    workspaceId: string,
     file: File,
     onProgress?: (ratio: number) => void,
   ): { promise: Promise<RecordingSummary>; abort: () => void } {
@@ -157,7 +150,11 @@ export const api = {
     const promise = new Promise<RecordingSummary>((resolve, reject) => {
       const form = new FormData()
       form.append('file', file)
-      xhr.open('POST', '/api/recordings')
+      xhr.open('POST', apiUrl(`/api/workspaces/${workspaceId}/recordings`))
+      xhr.withCredentials = true
+      // XHR은 공통 층을 지나지 않으므로 CSRF 헤더를 여기서 붙인다
+      const token = csrfToken()
+      if (token) xhr.setRequestHeader('x-csrf-token', token)
       xhr.upload.addEventListener('progress', (e) => {
         if (e.lengthComputable) onProgress?.(e.loaded / e.total)
       })
@@ -191,6 +188,6 @@ export const api = {
     return { promise, abort: () => xhr.abort() }
   },
   audioUrl(id: string) {
-    return `/api/recordings/${id}/audio`
+    return apiUrl(`/api/recordings/${id}/audio`)
   },
 }

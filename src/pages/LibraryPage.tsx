@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { currentWorkspaceId } from '../workspace'
 import { Link, useSearchParams } from 'react-router-dom'
 import { FolderOpen, Upload, X } from 'lucide-react'
 import { api, type RecordingSummary } from '../api'
@@ -29,7 +30,7 @@ export default function LibraryPage() {
   const tagName = params.get('tagName') ?? undefined
   const uploads = useUpload()
   const query = useAsync(
-    () => api.listRecordings({ status: status === '전체' ? undefined : status, tag, limit }),
+    () => api.listRecordings(currentWorkspaceId(), { status: status === '전체' ? undefined : status, tag, limit }),
     [status, tag, limit, uploads.completed],
   )
   const fileInput = useRef<HTMLInputElement | null>(null)
