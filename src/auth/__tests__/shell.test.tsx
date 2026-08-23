@@ -193,9 +193,15 @@ describe('늦게 온 응답', () => {
 
     await userEvent.click(screen.getByRole('button', { name: '지금 다시 확인' }))
     await userEvent.click(screen.getByRole('button', { name: '로그아웃' }))
-    resolve(makeMe())
+    await screen.findByRole('button', { name: '로그인' })
 
-    await waitFor(() => expect(screen.getByRole('button', { name: '로그인' })).toBeInTheDocument())
+    // 로그아웃이 끝난 뒤에 늦은 응답이 도착한다. 여기서 되살아나면 안 된다
+    await act(async () => {
+      resolve(makeMe())
+      await Promise.resolve()
+    })
+
+    expect(screen.getByRole('button', { name: '로그인' })).toBeInTheDocument()
     expect(screen.queryByText('보관함 내용')).toBeNull()
   })
 
