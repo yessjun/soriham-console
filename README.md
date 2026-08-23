@@ -11,7 +11,7 @@
 
 ```bash
 npm install
-npm run dev   # http://localhost:5174 아님 — vite 기본 포트, /api는 8200으로 프록시
+npm run dev   # http://localhost:5173, /api는 8200으로 프록시된다
 ```
 
 ## 전체 아키텍처
