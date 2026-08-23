@@ -33,7 +33,7 @@ let onUnauthorized: StatusHandler | null = null
 let onForbidden: StatusHandler | null = null
 
 /**
- * 세션이 끊겼을 때 부를 곳. **401만 부른다.**
+ * 세션이 끊겼을 때 부를 곳. 401에서만 부른다.
  *
  * 403은 "로그인은 됐는데 이건 못 한다"라서 로그인 화면으로 보내면 무한 반복이 된다.
  * 승인 대기 계정이 워크스페이스를 열 때가 정확히 그 경우다.
@@ -43,7 +43,7 @@ export function setUnauthorizedHandler(handler: StatusHandler | null): void {
 }
 
 /**
- * 403을 받았을 때 부를 곳. **로그인 화면으로 보내라는 뜻이 아니다.**
+ * 403을 받았을 때 부를 곳. 로그인 화면으로 보내라는 뜻이 아니다.
  *
  * 계정이 중간에 중지되면 세션은 살아 있고 호출만 403이 된다. 화면이 든 상태는 아직
  * 활성이라 그대로 남는다. 여기서 다시 물어야 대기 화면으로 넘어간다.
