@@ -45,8 +45,9 @@ export function setUnauthorizedHandler(handler: StatusHandler | null): void {
 /**
  * 403을 받았을 때 부를 곳. 로그인 화면으로 보내라는 뜻이 아니다.
  *
- * 계정이 중간에 중지되면 세션은 살아 있고 호출만 403이 된다. 화면이 든 상태는 아직
- * 활성이라 그대로 남는다. 여기서 다시 물어야 대기 화면으로 넘어간다.
+ * 승인 대기 계정은 로그인에 성공해 세션을 들고 있고, 워크스페이스 호출에서만 403을
+ * 받는다. 화면이 든 상태는 그 사이에 승인됐을 수도 있으므로 여기서 다시 물어야
+ * 대기 화면과 본화면 중 맞는 쪽으로 넘어간다.
  */
 export function setForbiddenHandler(handler: StatusHandler | null): void {
   onForbidden = handler
