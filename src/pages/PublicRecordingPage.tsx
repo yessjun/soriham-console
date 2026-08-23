@@ -75,6 +75,7 @@ export default function PublicRecordingPage() {
               speakerNames={rec.speaker_names}
               track={track}
               showSpeakerNames={Object.keys(rec.speaker_names).length > 0}
+              playable={rec.allow_audio}
             />
           </section>
         </>
