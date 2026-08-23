@@ -28,15 +28,3 @@ export function formatEta(sec: number | null | undefined): string {
   const m = totalMin % 60
   return h > 0 ? `${h}시간 ${m}분` : `${m}분`
 }
-
-// 용어집 상태머신 이름 그대로 표기하되 화면용 짧은 설명을 병기
-export const STATUS_LABELS: Record<string, string> = {
-  pending: 'pending',
-  transcribing: 'transcribing',
-  diarizing: 'diarizing',
-  enriching: 'enriching',
-  done: 'done',
-  error: 'error',
-  missing: 'missing',
-  duplicate: 'duplicate',
-}

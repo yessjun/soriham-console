@@ -6,20 +6,10 @@ import { api } from '../api'
 import { useAsync } from '../hooks'
 import { formatDate, formatDuration, formatEta } from '../format'
 import { EmptyState, ErrorNote, ListSkeleton, StatusBadge } from '../components/ui'
+import { STATUSES } from '../status'
 
 const REFRESH_MS = 5000
 
-// 표시 순서: 진행 흐름 순
-const STATUS_ORDER = [
-  'pending',
-  'transcribing',
-  'diarizing',
-  'enriching',
-  'done',
-  'error',
-  'missing',
-  'duplicate',
-]
 
 export default function DashboardPage() {
   const workspaceId = useWorkspaceId()
@@ -89,7 +79,7 @@ export default function DashboardPage() {
           </section>
 
           <section className="mb-6 grid max-w-[720px] grid-cols-4 gap-3">
-            {STATUS_ORDER.filter((s) => counts.has(s)).map((status) => {
+            {STATUSES.filter((s) => counts.has(s)).map((status) => {
               const entry = counts.get(status)!
               return (
                 <div

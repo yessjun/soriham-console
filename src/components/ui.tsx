@@ -1,22 +1,14 @@
 import type { ReactNode } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { formatEta } from '../format'
+import { STATUS_COLOR, statusLabel } from '../status'
 
 // 상태 배지: 시맨틱 상태색 10%(라이트)/18%(다크) 배경 규칙은
 // color-mix로 상태색 토큰에서 유도한다
-const STATUS_COLOR: Record<string, string> = {
-  done: 'var(--ok)',
-  pending: 'var(--warn)',
-  missing: 'var(--warn)',
-  duplicate: 'var(--text-tertiary)',
-  transcribing: 'var(--info)',
-  diarizing: 'var(--info)',
-  enriching: 'var(--info)',
-  error: 'var(--error)',
-}
 
 export function StatusBadge({ status, progress }: { status: string; progress?: number | null }) {
   const color = STATUS_COLOR[status] ?? 'var(--text-tertiary)'
+  const label = statusLabel(status)
   const pct = progress == null ? null : Math.round(progress * 100)
   return (
     <span
@@ -27,7 +19,7 @@ export function StatusBadge({ status, progress }: { status: string; progress?: n
       }}
       data-status={status}
     >
-      {pct == null ? status : `${status} ${pct}%`}
+      {pct == null ? label : `${label} ${pct}%`}
     </span>
   )
 }
