@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { X } from 'lucide-react'
 
 type Props = {
   open: boolean
@@ -36,13 +37,34 @@ export function Modal({ open, onClose, title, children, footer, width = 480 }: P
         onClose()
       }}
       onClick={(event) => {
-        // dialog 자신이 대상이면 백드롭을 누른 것이다. 내용은 자식이 받는다
-        if (event.target === ref.current) onClose()
+        // 판 밖을 눌렀는지 좌표로 본다. event.target으로 보면 dialog 자신의 패딩,
+        // 그러니까 판 안쪽 가장자리를 눌러도 닫혀 쓰던 입력이 통째로 날아간다
+        const box = ref.current?.getBoundingClientRect()
+        if (!box) return
+        const outside =
+          event.clientX < box.left ||
+          event.clientX > box.right ||
+          event.clientY < box.top ||
+          event.clientY > box.bottom
+        if (outside) onClose()
       }}
-      className="m-auto rounded-[14px] bg-surface-raised p-6 text-text shadow-3 backdrop:bg-[color-mix(in_srgb,var(--text)_40%,transparent)]"
+      className="m-auto rounded-[14px] bg-surface-raised p-6 text-text shadow-[var(--shadow-3)] backdrop:bg-[rgb(28_27_26_/_0.4)]"
       style={{ width }}
     >
-      <h2 className="text-lg font-semibold">{title}</h2>
+      <div className="flex items-start justify-between gap-4">
+        <h2 className="text-lg font-semibold">{title}</h2>
+        {!footer && (
+          // 액션 줄이 없는 판은 Escape와 바깥 클릭 말고는 닫는 길이 없다
+          <button
+            type="button"
+            aria-label="닫기"
+            onClick={onClose}
+            className="-m-1 rounded-[6px] p-1 text-text-tertiary transition-colors duration-120 hover:bg-bg hover:text-text"
+          >
+            <X size={18} strokeWidth={1.75} />
+          </button>
+        )}
+      </div>
       <div className="mt-4 text-sm">{children}</div>
       {footer && <div className="mt-6 flex justify-end gap-2">{footer}</div>}
     </dialog>

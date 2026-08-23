@@ -92,7 +92,9 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
     } catch {
       // 본문 없는 오류는 상태 코드 메시지 유지
     }
-    if (resp.status === 401) onUnauthorized?.()
+    // 비밀번호가 걸린 링크는 잠금 해제 전에 401을 준다. 그것을 세션 만료로 다루면
+    // 로그인한 사람이 남의 링크를 여는 것만으로 앱이 익명 상태로 뒤집힌다
+    if (resp.status === 401 && !path.startsWith('/api/shared/')) onUnauthorized?.()
     if (resp.status === 403) onForbidden?.()
     throw new ApiError(message, resp.status, detail)
   }

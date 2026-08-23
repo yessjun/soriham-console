@@ -120,6 +120,7 @@ export default function LibraryPage() {
           <button
             key={s}
             type="button"
+            aria-pressed={status === s}
             onClick={() => {
               setStatus(s)
               setLimit(PAGE_SIZE)

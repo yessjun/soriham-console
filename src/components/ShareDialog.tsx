@@ -6,6 +6,7 @@ import { ConfirmDialog } from './ConfirmDialog'
 import { CopyButton } from './CopyButton'
 import { Input } from './Input'
 import { Modal } from './Modal'
+import { withJosa } from '../format'
 import { useAsync } from '../hooks'
 import { ErrorNote } from './ui'
 
@@ -268,7 +269,7 @@ export function ShareDialog({ recordingId, open, onClose, onChanged }: Props) {
         open={pending !== null}
         title={
           pending?.kind === 'link'
-            ? `${pending.name}을 철회합니다`
+            ? `${withJosa(pending.name, '을', '를')} 철회합니다`
             : `${pending?.name ?? ''}의 공유를 해제합니다`
         }
         description={
@@ -278,8 +279,12 @@ export function ShareDialog({ recordingId, open, onClose, onChanged }: Props) {
         }
         confirmLabel={pending?.kind === 'link' ? '철회하기' : '해제하기'}
         busy={busy}
+        error={error}
         onConfirm={() => void confirmRevoke()}
-        onCancel={() => setPending(null)}
+        onCancel={() => {
+          setPending(null)
+          setError('')
+        }}
       />
     </>
   )

@@ -18,11 +18,20 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]): AsyncState<T
   const [loading, setLoading] = useState(false)
   const [tick, setTick] = useState(0)
   const seq = useRef(0)
+  const lastKey = useRef<string | null>(null)
 
   useEffect(() => {
     const current = ++seq.current
     setError(null)
     setErrorStatus(null)
+    // 무엇을 부르는지가 바뀌면 앞 화면의 값을 버린다. 그대로 두면 다른 녹음의 주소에
+    // 앞 녹음의 전사가, 새 워크스페이스 이름표 아래 앞 워크스페이스의 목록이 남는다.
+    // 같은 대상을 다시 부르는 것(폴링)은 여기 걸리지 않아야 화면이 깜빡이지 않는다
+    const key = JSON.stringify(deps)
+    if (lastKey.current !== key) {
+      lastKey.current = key
+      setData(null)
+    }
     const timer = setTimeout(() => {
       if (seq.current === current) setLoading(true)
     }, 200)

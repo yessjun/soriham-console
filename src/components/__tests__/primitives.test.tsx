@@ -242,3 +242,34 @@ describe('상태를 들고 쓰는 흐름', () => {
     expect(screen.getByRole('dialog', { hidden: true })).not.toHaveAttribute('open')
   })
 })
+
+describe('모달의 닫는 길', () => {
+  it('판 안쪽 가장자리를 눌러도 닫히지 않는다', async () => {
+    // dialog 자신이 패딩을 갖고 있어 event.target으로 보면 판 안쪽도 백드롭이 된다.
+    // 공유 판에서는 쓰던 이메일과 링크 설정이 통째로 날아간다
+    const closed: string[] = []
+    render(
+      <Modal open title="공유" onClose={() => closed.push('닫힘')}>
+        <p>내용</p>
+      </Modal>,
+    )
+    const dialog = screen.getByRole('dialog', { hidden: true })
+    dialog.getBoundingClientRect = () =>
+      ({ left: 100, right: 500, top: 100, bottom: 400 }) as DOMRect
+
+    fireEvent.click(dialog, { clientX: 110, clientY: 110 })
+    expect(closed).toEqual([])
+
+    fireEvent.click(dialog, { clientX: 10, clientY: 10 })
+    expect(closed).toEqual(['닫힘'])
+  })
+
+  it('액션 줄이 없으면 닫기 버튼을 준다', () => {
+    render(
+      <Modal open title="공유" onClose={() => {}}>
+        <p>내용</p>
+      </Modal>,
+    )
+    expect(screen.getByRole('button', { name: '닫기' })).toBeInTheDocument()
+  })
+})

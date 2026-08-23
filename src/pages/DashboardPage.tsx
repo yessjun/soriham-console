@@ -6,7 +6,7 @@ import { api } from '../api'
 import { useAsync } from '../hooks'
 import { formatDate, formatDuration, formatEta } from '../format'
 import { EmptyState, ErrorNote, ListSkeleton, StatusBadge } from '../components/ui'
-import { STATUSES } from '../status'
+import { ACTIVE_STATUSES, STATUSES } from '../status'
 
 const REFRESH_MS = 5000
 
@@ -15,10 +15,16 @@ export default function DashboardPage() {
   const workspaceId = useWorkspaceId()
   const query = useAsync(() => api.stats(workspaceId), [workspaceId])
 
+  // 처리 중인 것이 없으면 다시 받을 이유가 없다. 라이브러리와 같은 규칙이다
+  const active = (query.data?.by_status ?? []).some(
+    (row) => ACTIVE_STATUSES.includes(row.status) && row.count > 0,
+  )
+  const reload = query.reload
   useEffect(() => {
-    const timer = setInterval(query.reload, REFRESH_MS)
+    if (!active) return
+    const timer = setInterval(reload, REFRESH_MS)
     return () => clearInterval(timer)
-  }, [query.reload])
+  }, [active, reload])
 
   if (query.error) {
     return (
