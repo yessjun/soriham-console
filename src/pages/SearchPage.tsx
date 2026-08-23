@@ -39,6 +39,8 @@ export default function SearchPage() {
           ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          type="search"
+          aria-label="검색어"
           placeholder="녹취록, 파일명, 제목, 요약에서 검색"
           className="h-9 w-full rounded-[6px] border border-border-strong bg-surface pr-3 pl-10 text-base"
         />

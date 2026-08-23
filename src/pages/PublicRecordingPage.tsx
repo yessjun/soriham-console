@@ -42,7 +42,8 @@ export default function PublicRecordingPage() {
   }
 
   return (
-    <PublicLayout>
+    // 오디오를 막은 링크에는 플레이어를 그리지 않는다
+    <PublicLayout footer={rec.allow_audio ? <PlayerBar /> : null}>
       <h1 className="text-2xl font-bold tracking-[-0.01em]">{rec.title ?? '제목 없는 녹음'}</h1>
       <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-text-secondary">
         <span className="tnum">{formatDate(rec.recorded_at)}</span>
@@ -84,8 +85,6 @@ export default function PublicRecordingPage() {
         </>
       )}
 
-      {/* 오디오를 막은 링크에는 플레이어를 그리지 않는다 */}
-      {rec.allow_audio && <PlayerBar />}
     </PublicLayout>
   )
 }
