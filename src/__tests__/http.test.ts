@@ -65,7 +65,7 @@ describe('CSRF 헤더', () => {
   })
 
   it('GET에는 붙이지 않는다', async () => {
-    // 오디오 태그는 헤더를 실을 수 없다. GET 면제가 재생이 도는 보증이다
+    // 오디오 태그는 헤더를 실을 수 없다. GET을 면제해야 재생이 된다
     document.cookie = 'soriham_csrf=aB3-_x9Qz'
 
     await request('/api/x')

@@ -11,7 +11,7 @@ type Props = {
  * 누르면 아이콘이 잠시 체크로 바뀐다. 토스트를 띄우지 않는다.
  *
  * 클립보드 접근이 막힌 브라우저가 있으므로, 실패하면 그 자리에서 선택 가능한
- * 텍스트를 내놓는다. 조용히 아무 일도 없는 것이 가장 나쁘다.
+ * 텍스트를 내놓는다. 실패했는데 아무 표시가 없으면 눌렀는지도 알 수 없다.
  */
 export function CopyButton({ value, label = '복사' }: Props) {
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle')

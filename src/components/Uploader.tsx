@@ -62,7 +62,7 @@ export function useUpload(): UploadState {
 
 /**
  * 업로드 큐. 디스크 쓰기가 어차피 직렬이라 한 건씩 순차로 보낸다.
- * 화면 전환에도 진행과 실패가 살아남게 앱 셸에 둔다.
+ * 화면을 옮겨도 진행과 실패가 남도록 앱 셸에 둔다.
  */
 export function UploadProvider({ children }: { children: ReactNode }) {
   const workspaceId = useWorkspaceId()

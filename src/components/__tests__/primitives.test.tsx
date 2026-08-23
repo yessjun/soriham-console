@@ -208,7 +208,7 @@ describe('CopyButton', () => {
   })
 
   it('클립보드가 막히면 직접 고를 수 있게 내놓는다', async () => {
-    // 조용히 아무 일도 없는 것이 가장 나쁘다
+    // 실패했는데 아무 표시가 없으면 눌렀는지도 알 수 없다
     Object.assign(navigator, {
       clipboard: { writeText: vi.fn().mockRejectedValue(new Error('denied')) },
     })
