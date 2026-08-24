@@ -37,10 +37,16 @@ export function Modal({ open, onClose, title, children, footer, width = 480 }: P
         onClose()
       }}
       onClick={(event) => {
-        // 판 밖을 눌렀는지 좌표로 본다. event.target으로 보면 dialog 자신의 패딩,
-        // 그러니까 판 안쪽 가장자리를 눌러도 닫혀 쓰던 입력이 통째로 날아간다
-        const box = ref.current?.getBoundingClientRect()
-        if (!box) return
+        // 백드롭 클릭은 두 가지가 동시에 참이어야 한다.
+        //
+        // 하나, 이벤트 대상이 dialog 자신일 것. 안쪽 버튼을 키보드로 누르면 브라우저가
+        // 좌표 0인 click을 만드는데, 좌표만 보면 그것이 판 밖으로 판정돼 실행과 동시에
+        // 판이 닫힌다 — 삭제 실패 문구가 닫힌 판 안에서 사라진다.
+        //
+        // 둘, 좌표가 판 밖일 것. dialog가 패딩을 갖고 있어 대상만 보면 판 안쪽
+        // 가장자리를 눌러도 닫혀 쓰던 입력이 통째로 날아간다.
+        if (event.target !== ref.current) return
+        const box = ref.current.getBoundingClientRect()
         const outside =
           event.clientX < box.left ||
           event.clientX > box.right ||

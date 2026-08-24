@@ -264,6 +264,28 @@ describe('모달의 닫는 길', () => {
     expect(closed).toEqual(['닫힘'])
   })
 
+  it('키보드로 실행 버튼을 눌러도 닫히지 않는다', () => {
+    // 키보드 활성화가 만드는 click은 좌표가 0이다. 좌표만 보면 판 밖으로 판정돼
+    // 실행과 동시에 판이 닫히고, 실패 문구가 닫힌 판 안에서 사라진다
+    const events: string[] = []
+    render(
+      <ConfirmDialog
+        open
+        title="지웁니다"
+        confirmLabel="지우기"
+        onConfirm={() => events.push('실행')}
+        onCancel={() => events.push('닫힘')}
+      />,
+    )
+    const dialog = screen.getByRole('dialog', { hidden: true })
+    dialog.getBoundingClientRect = () =>
+      ({ left: 100, right: 500, top: 100, bottom: 400 }) as DOMRect
+
+    fireEvent.click(screen.getByRole('button', { name: '지우기' }), { clientX: 0, clientY: 0 })
+
+    expect(events).toEqual(['실행'])
+  })
+
   it('액션 줄이 없으면 닫기 버튼을 준다', () => {
     render(
       <Modal open title="공유" onClose={() => {}}>
