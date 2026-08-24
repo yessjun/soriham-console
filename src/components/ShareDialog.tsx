@@ -116,7 +116,7 @@ export function ShareDialog({ recordingId, open, onClose, onChanged }: Props) {
               name="share-email"
               type="email"
               label="이메일"
-              className="flex-1"
+              wrapperClassName="flex-1"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               onEnter={() => void invite()}

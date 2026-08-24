@@ -273,3 +273,17 @@ describe('모달의 닫는 길', () => {
     expect(screen.getByRole('button', { name: '닫기' })).toBeInTheDocument()
   })
 })
+
+describe('Input의 배치 클래스', () => {
+  it('바깥 상자가 받는다', () => {
+    // 안쪽 input에 붙이면 세로 flex 자식이 되어 높이가 눌린다. 공유 판의 이메일 칸이
+    // 옆 버튼은 36인데 혼자 18로 찌그러져 있었다
+    const { container } = render(<Input name="q" label="이메일" wrapperClassName="flex-1" />)
+    const input = screen.getByLabelText('이메일')
+
+    expect(input.className).not.toContain('flex-1')
+    expect(container.querySelector('.flex-1')).toContainElement(input)
+    expect(input.className).toContain('h-9')
+    expect(input.className).toContain('w-full')
+  })
+})
