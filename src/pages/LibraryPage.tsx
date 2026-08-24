@@ -35,7 +35,9 @@ export default function LibraryPage() {
   const uploads = useUpload()
   const query = useAsync(
     () => api.listRecordings(workspaceId, { status: status === ALL ? undefined : status, tag, limit }),
-    [workspaceId, status, tag, limit, uploads.completed],
+    [workspaceId, status, tag],
+    // 더 보기와 업로드 완료는 같은 목록을 다시 부르는 것이라 값을 비우지 않는다
+    [limit, uploads.completed],
   )
   const fileInput = useRef<HTMLInputElement | null>(null)
   const [dragging, setDragging] = useState(false)

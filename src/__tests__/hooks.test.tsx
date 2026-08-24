@@ -25,3 +25,28 @@ describe('useAsync', () => {
     expect(result.current.data).toBe('그대로')
   })
 })
+
+describe('useAsync의 refreshDeps', () => {
+  it('다시 부르되 앞 값을 비우지 않는다', async () => {
+    // 업로드 완료와 더 보기는 같은 목록을 다시 부르는 것이다. 여기서 비우면
+    // 파일 하나 올릴 때마다, 더 보기를 누를 때마다 목록이 통째로 깜빡인다
+    let calls = 0
+    const { result, rerender } = renderHook(
+      ({ n }) =>
+        useAsync(
+          () => {
+            calls += 1
+            return Promise.resolve(`값${calls}`)
+          },
+          ['같은대상'],
+          [n],
+        ),
+      { initialProps: { n: 0 } },
+    )
+    await waitFor(() => expect(result.current.data).toBe('값1'))
+
+    rerender({ n: 1 })
+    expect(result.current.data).toBe('값1')
+    await waitFor(() => expect(result.current.data).toBe('값2'))
+  })
+})
